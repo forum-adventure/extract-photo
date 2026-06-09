@@ -153,114 +153,83 @@
     
     
 
-        /* --- THIẾT KẾ LẠI THANH SLIDER ĐÔI CAO CẤP --- */
-.slider-container { 
-    position: relative; 
-    width: 100%; 
-    height: 32px; /* Tăng không gian để dễ tương tác bấm/vuốt */
-    display: flex; 
-    align-items: center; 
-    cursor: pointer;
-    margin: 4px 0;
-}
+               /* --- KHÔI PHỤC SLIDER ĐÔI V1 (TỐI ƯU GIAO DIỆN V2) --- */
+        .dual-slider-wrapper {
+            position: relative;
+            width: 100%;
+            height: 40px;
+            display: flex;
+            align-items: center;
+        }
 
-/* Định dạng chung cho cả 2 thanh trượt */
-input[type="range"] { 
-    position: absolute; 
-    pointer-events: none; 
-    -webkit-appearance: none; 
-    appearance: none;
-    width: 100%; 
-    height: 6px; 
-    background: transparent; /* Ẩn nền mặc định để tự custom dải màu */
-    outline: none; 
-    margin: 0; 
-}
+        .slider-track {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100%;
+            height: 6px;
+            background-color: #2d2d2d;
+            border-radius: 3px;
+            z-index: 1;
+        }
 
-/* Tách biệt logic: Thanh đầu tiên chịu trách nhiệm hiển thị thanh Track xám nền */
-input[type="range"]:first-child::-webkit-slider-runnable-track {
-    background: #2d2d2d;
-    border-radius: 4px;
-    height: 6px;
-}
-input[type="range"]:first-child::-moz-range-track {
-    background: #2d2d2d;
-    border-radius: 4px;
-    height: 6px;
-}
+        .slider-fill {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 6px;
+            background: linear-gradient(90deg, #03dac6, #bb86fc);
+            border-radius: 3px;
+            z-index: 2;
+        }
 
-/* Nút tròn điều khiển (Thumb) - Thiết kế dạng Neon cao cấp */
-input[type="range"]::-webkit-slider-thumb { 
-    pointer-events: all; 
-    position: relative; 
-    z-index: 10; 
-    -webkit-appearance: none; 
-    width: 20px; 
-    height: 20px; 
-    border-radius: 50%; 
-    background: #ffffff; 
-    border: 3px solid #03dac6;
-    cursor: grab; 
-    box-shadow: 0 0 10px rgba(3, 218, 198, 0.6), 0 2px 4px rgba(0,0,0,0.5); 
-    transition: transform 0.1s ease, background-color 0.2s;
-    /* THÊM DÒNG NÀY ĐỂ CĂN GIỮA THUMB VỚI TRACK */
-    margin-top: -7px; 
-    margin-bottom: -7px;
-}
- background-color 0.2s;
-}
+        input[type="range"] {
+            position: absolute;
+            width: 100%;
+            height: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            pointer-events: none;
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+            z-index: 3;
+            outline: none;
+        }
 
-input[type="range"]::-moz-range-thumb {
-    pointer-events: all; 
-    position: relative; 
-    z-index: 10; 
-    width: 14px; 
-    height: 14px; 
-    border-radius: 50%; 
-    background: #ffffff; 
-    border: 3px solid #03dac6;
-    cursor: grab; 
-    box-shadow: 0 0 10px rgba(3, 218, 198, 0.6), 0 2px 4px rgba(0,0,0,0.5);
-    transition: transform 0.1s ease, background-color 0.2s;
-}
+        /* Style nút kéo (Thumb) */
+        input[type="range"]::-webkit-slider-thumb {
+            pointer-events: all;
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid #03dac6;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(3, 218, 198, 0.5);
+            transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.2); }
 
-/* Nút tròn đổi màu khi đang được kéo giữ */
-input[type="range"]::-webkit-slider-thumb:active {
-    cursor: grabbing;
-    transform: scale(1.2);
-    background: #03dac6;
-}
-input[type="range"]::-moz-range-thumb:active {
-    cursor: grabbing;
-    transform: scale(1.2);
-    background: #03dac6;
-}
+        #rangeEnd::-webkit-slider-thumb { 
+            border-color: #bb86fc; 
+            box-shadow: 0 0 10px rgba(187, 134, 252, 0.5); 
+        }
 
-/* Phân biệt nút bấm của End range sang màu Tím hồng (Match với nút Download ZIP của bạn) */
-#rangeEnd::-webkit-slider-thumb {
-    border-color: #bb86fc;
-    box-shadow: 0 0 10px rgba(187, 134, 252, 0.6), 0 2px 4px rgba(0,0,0,0.5);
-}
-#rangeEnd::-moz-range-thumb {
-    border-color: #bb86fc;
-    box-shadow: 0 0 10px rgba(187, 134, 252, 0.6), 0 2px 4px rgba(0,0,0,0.5);
-}
-#rangeEnd::-webkit-slider-thumb:active { background: #bb86fc; }
-#rangeEnd::-moz-range-thumb:active { background: #bb86fc; }
+        /* Nút kéo cho Firefox */
+        input[type="range"]::-moz-range-thumb {
+            pointer-events: all;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid #03dac6;
+            cursor: pointer;
+        }
+        #rangeEnd::-moz-range-thumb { border-color: #bb86fc; }
 
-/* --- ĐIỂM NHẤN: HIỆU ỨNG THÀNH PHẦN KẾT NỐI (PROGRESS FILL) --- */
-/* Tạo một thanh dải màu ảo nằm giữa Start và End để người dùng biết khoảng thời gian được chọn */
-.slider-container::before {
-    content: "";
-    position: absolute;
-    height: 6px;
-    background: linear-gradient(90deg, #03dac6, #bb86fc); /* Chuyển màu mượt mà từ Từ -> Đến */
-    border-radius: 4px;
-    z-index: 1;
-    left: var(--range-start, 0%);
-    right: var(--range-end, 100%);
-    pointer-events: none;
-}
 
     
     
@@ -395,10 +364,13 @@ input[type="range"]::-moz-range-thumb:active {
                     <span style="font-size:0.85em; color:#aaa;">đến</span>
                     <input type="text" id="end" value="00:00:05">
                 </div>
-                <div class="slider-container">
-                    <input type="range" id="rangeStart" min="0" max="100" value="0" step="0.1">
-                    <input type="range" id="rangeEnd" min="0" max="100" value="5" step="0.1">
-                </div>
+                <div class="dual-slider-wrapper" id="sliderWrapper">
+    <div class="slider-track"></div>
+    <div class="slider-fill" id="sliderFill"></div>
+    <input type="range" id="rangeStart" min="0" max="100" value="0" step="0.01">
+    <input type="range" id="rangeEnd" min="0" max="100" value="5" step="0.01">
+</div>
+
             </div>
         </div>
         
@@ -545,44 +517,36 @@ const intervalStepInput = document.getElementById('intervalStep');
     
     
                 function updateInputsFromSliders() {
-            let valStart = parseFloat(rangeStart.value);
-            let valEnd = parseFloat(rangeEnd.value);
-            const minGap = 5; // Khoảng cách tối thiểu 5 giây
-            const maxDuration = parseFloat(rangeStart.max) || 100;
-const percentStart = (rangeStart.value / maxDuration) * 100;
-const percentEnd = 100 - ((rangeEnd.value / maxDuration) * 100);
+    let valStart = parseFloat(rangeStart.value);
+    let valEnd = parseFloat(rangeEnd.value);
+    const minGap = 5; // Khoảng cách tối thiểu 5 giây giữa 2 nút
+    const maxDuration = parseFloat(rangeStart.max) || 100;
 
-sliderContainer.style.setProperty('--range-start', percentStart + '%');
-sliderContainer.style.setProperty('--range-end', percentEnd + '%');
-
-            // Nếu tổng thời lượng video nhỏ hơn khoảng cách tối thiểu
-            if (maxDuration <= minGap) {
-                rangeStart.value = 0;
-                rangeEnd.value = maxDuration;
-            } else {
-                // Kiểm tra va chạm và giữ khoảng cách 5 giây tùy thuộc vào nút nào đang di chuyển
-                if (valEnd - valStart < minGap) {
-                    if (activeSlider === rangeStart) {
-                        rangeStart.value = valEnd - minGap;
-                    } else if (activeSlider === rangeEnd) {
-                        rangeEnd.value = valStart + minGap;
-                    } else {
-                        // Trường hợp khởi tạo hoặc nhập liệu thủ công
-                        if (valStart + minGap <= maxDuration) {
-                            rangeEnd.value = valStart + minGap;
-                        } else {
-                            rangeStart.value = valEnd - minGap;
-                        }
-                    }
-                }
-            }
-
-            startInput.value = formatSeconds(rangeStart.value);
-            endInput.value = formatSeconds(rangeEnd.value);
-            updateFrameCount();
-                
-                
+    // Khóa va chạm chặn kéo ngược / giữ khoảng cách 5s
+    if (valStart > valEnd - minGap) {
+        // Nếu người dùng đang kéo start vượt quá giới hạn
+        if (document.activeElement === rangeStart) {
+            rangeStart.value = valEnd - minGap;
+            valStart = valEnd - minGap;
+        } else {
+            rangeEnd.value = valStart + minGap;
+            valEnd = valStart + minGap;
         }
+    }
+
+    // Tính toán % để fill dải màu gradient mượt mà đúng chuẩn v1
+    const percent1 = (rangeStart.value / maxDuration) * 100;
+    const percent2 = (rangeEnd.value / maxDuration) * 100;
+
+    sliderFill.style.left = percent1 + "%";
+    sliderFill.style.width = (percent2 - percent1) + "%";
+
+    // Đồng bộ text box
+    startInput.value = formatSeconds(rangeStart.value);
+    endInput.value = formatSeconds(rangeEnd.value);
+    updateFrameCount();
+}
+
 
 
         function updateFrameCount() {
@@ -762,75 +726,26 @@ sliderContainer.style.setProperty('--range-end', percentEnd + '%');
     const sliderContainer = document.querySelector('.slider-container');
     let activeSlider = null; // Lưu trữ input range nào đang được kéo
 
-    sliderContainer.addEventListener('pointerdown', (e) => {
-        // Lấy kích thước và vị trí của thanh trượt
-        const rect = sliderContainer.getBoundingClientRect();
-        
-        // Hàm tính toán giá trị thời gian dựa trên vị trí con trỏ (X)
-        function getValueFromX(clientX) {
-            let percentage = (clientX - rect.left) / rect.width;
-            if (percentage < 0) percentage = 0;
-            if (percentage > 1) percentage = 1;
-            const maxDuration = parseFloat(rangeStart.max) || 100;
-            return percentage * maxDuration;
-        }
-
-        const clickedValue = getValueFromX(e.clientX);
-        
-        // Lấy giá trị hiện tại của 2 nút
-        const valStart = parseFloat(rangeStart.value);
-        const valEnd = parseFloat(rangeEnd.value);
-        
-        // Tính khoảng cách từ vị trí bấm đến 2 nút để chọn nút gần nhất
-        const distToStart = Math.abs(clickedValue - valStart);
-        const distToEnd = Math.abs(clickedValue - valEnd);
-        
-        if (distToStart < distToEnd) {
-            activeSlider = rangeStart;
+    // Lắng nghe sự kiện kéo trực tiếp trên slider của v1
+[rangeStart, rangeEnd].forEach(el => {
+    el.oninput = (e) => {
+        // Đẩy độ ưu tiên hiển thị (Z-index) nút đang được kéo lên trên
+        if (e.target === rangeStart) {
+            rangeStart.style.zIndex = 4;
+            rangeEnd.style.zIndex = 3;
         } else {
-            activeSlider = rangeEnd;
+            rangeStart.style.zIndex = 3;
+            rangeEnd.style.zIndex = 4;
         }
-        
-        // Cập nhật ngay lập tức vị trí nút tròn đến ngón tay/con trỏ
-        activeSlider.value = clickedValue;
+
         updateInputsFromSliders();
 
-        // Kích hoạt tính năng Capture để khóa mục tiêu vuốt vào nút tròn này kể cả khi vuốt lệch ra ngoài thanh trượt
-        sliderContainer.setPointerCapture(e.pointerId);
-    });
-
-       // Sự kiện di chuyển ngón tay (Vuốt)
-    sliderContainer.addEventListener('pointermove', (e) => {
-        if (!activeSlider) return; 
-
-        const rect = sliderContainer.getBoundingClientRect();
-        let percentage = (e.clientX - rect.left) / rect.width;
-        if (percentage < 0) percentage = 0;
-        if (percentage > 1) percentage = 1;
-        
-        const maxDuration = parseFloat(rangeStart.max) || 100;
-        const newValue = percentage * maxDuration;
-
-        activeSlider.value = newValue;
-        updateInputsFromSliders();
-
-        // BỔ SUNG: Tua video theo vị trí con trỏ/ngón tay đang vuốt trực tiếp
+        // Tua video theo nút đang kéo
         if (video.src) {
-            video.currentTime = newValue;
-        }
-    });
-
-
-    // Sự kiện nhấc ngón tay lên hoặc hủy bỏ (Bảo mật vuốt)
-    const endPointerTracking = (e) => {
-        if (activeSlider) {
-            sliderContainer.releasePointerCapture(e.pointerId);
-            activeSlider = null; // Giải phóng slider đang kéo
+            video.currentTime = parseFloat(e.target.value);
         }
     };
-
-    sliderContainer.addEventListener('pointerup', endPointerTracking);
-    sliderContainer.addEventListener('pointercancel', endPointerTracking);
+});
 
 
         // --- TỰ ĐỘNG TUA VIDEO KHI NHẬP THỜI GIAN THỦ CÔNG ---
