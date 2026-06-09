@@ -112,68 +112,202 @@
     
         video.portrait { max-height: 55vh; }
 
-                /* --- CONTROLS BAR (BOTTOM) --- */
+                        /* --- THANH ĐIỀU KHIỂN ĐÁY BIỂN (BẢN TỐI ƯU) --- */
         .controls { 
             position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: #1a1a1a; padding: 20px; border-top: 1px solid #2d2d2d; 
-            z-index: 1000; display: flex; flex-direction: column; gap: 16px; align-items: center; 
-            box-shadow: 0 -8px 24px rgba(0,0,0,0.6); box-sizing: border-box;
-            touch-action: none; /* Thêm dòng này để chặn trình duyệt cuộn trang khi vuốt ở đây */
+            background: #1a1a1a; padding: 16px 20px; border-top: 1px solid #2d2d2d; 
+            z-index: 1000; display: flex; flex-direction: column; gap: 14px; align-items: center; 
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.7); box-sizing: border-box;
+            touch-action: none;
         }
 
+        /* Hàng cha điều phối không gian */
         .controls-row { 
-            display: flex; gap: 12px; align-items: center; justify-content: center; 
-            width: 100%; max-width: 600px; box-sizing: border-box; 
+            display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; 
+            width: 100%; max-width: 800px; box-sizing: border-box; 
+        }
+
+        /* Khối tổng hợp thời gian (Inputs + Slider) */
+        .time-setting-box {
+            display: flex; flex-direction: column; width: 100%; gap: 10px;
+            background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid #252525;
+        }
+
+        .time-inputs {
+            display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%;
         }
         
         /* Đồng bộ hóa ô nhập liệu và select */
         input, select { 
-            padding: 10px 12px; background: #2d2d2d; color: white; 
+            padding: 8px 12px; background: #2d2d2d; color: white; 
             border: 1px solid #444; border-radius: 6px; text-align: center; 
-            font-size: 0.9em; outline: none; box-sizing: border-box;
+            font-size: 0.9em; outline: none; box-sizing: border-box; transition: border-color 0.2s;
         }
-        input:focus { border-color: #03dac6; }
+        input:focus, select:focus { border-color: #03dac6; }
         
-        /* Cấu hình kích thước ô nhập liệu để cân xứng */
         #start, #end { width: 90px; font-family: monospace; }
-        #randomCount { width: 55px; }
-        #modeSelect { flex: 1; max-width: 200px; text-align: left; }
+        #modeSelect { min-width: 160px; text-align: left; }
+        #intervalStep, #randomCount { width: 60px; }
+    
+    
+    
+    
 
-        /* Tối ưu nhóm nhập liệu phụ thuộc */
-        .input-group {
-            display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
-        }
-
-        /* Sliders - Thêm padding hai bên để không bị dính sát lề so với nút bấm */
-        /* Tìm đến đoạn này trong mã nguồn của bạn và cập nhật */
+        /* --- THIẾT KẾ LẠI THANH SLIDER ĐÔI CAO CẤP --- */
 .slider-container { 
-    position: relative; width: 100%; height: 20px; 
-    margin: 0 10px; display: flex; align-items: center; 
-    cursor: pointer; /* Thêm con trỏ chỉ tay */
+    position: relative; 
+    width: 100%; 
+    height: 32px; /* Tăng không gian để dễ tương tác bấm/vuốt */
+    display: flex; 
+    align-items: center; 
+    cursor: pointer;
+    margin: 4px 0;
 }
 
-        input[type="range"] { position: absolute; pointer-events: none; -webkit-appearance: none; width: 100%; height: 6px; background: #333; border-radius: 5px; outline: none; margin: 0; }
-    
-    
-        input[type="range"]::-webkit-slider-thumb { pointer-events: all; position: relative; z-index: 5; -webkit-appearance: none; width: 18px; height: 18px; background: #03dac6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 8px rgba(3,218,198,0.5); }
+/* Định dạng chung cho cả 2 thanh trượt */
+input[type="range"] { 
+    position: absolute; 
+    pointer-events: none; 
+    -webkit-appearance: none; 
+    appearance: none;
+    width: 100%; 
+    height: 6px; 
+    background: transparent; /* Ẩn nền mặc định để tự custom dải màu */
+    outline: none; 
+    margin: 0; 
+}
 
-        /* Buttons - Chia đều khoảng trống khi xuất hiện cả 2 nút */
+/* Tách biệt logic: Thanh đầu tiên chịu trách nhiệm hiển thị thanh Track xám nền */
+input[type="range"]:first-child::-webkit-slider-runnable-track {
+    background: #2d2d2d;
+    border-radius: 4px;
+    height: 6px;
+}
+input[type="range"]:first-child::-moz-range-track {
+    background: #2d2d2d;
+    border-radius: 4px;
+    height: 6px;
+}
+
+/* Nút tròn điều khiển (Thumb) - Thiết kế dạng Neon cao cấp */
+input[type="range"]::-webkit-slider-thumb { 
+    pointer-events: all; 
+    position: relative; 
+    z-index: 10; 
+    -webkit-appearance: none; 
+    width: 20px; 
+    height: 20px; 
+    border-radius: 50%; 
+    background: #ffffff; 
+    border: 3px solid #03dac6;
+    cursor: grab; 
+    box-shadow: 0 0 10px rgba(3, 218, 198, 0.6), 0 2px 4px rgba(0,0,0,0.5); 
+    transition: transform 0.1s ease, background-color 0.2s;
+    /* THÊM DÒNG NÀY ĐỂ CĂN GIỮA THUMB VỚI TRACK */
+    margin-top: -7px; 
+    margin-bottom: -7px;
+}
+ background-color 0.2s;
+}
+
+input[type="range"]::-moz-range-thumb {
+    pointer-events: all; 
+    position: relative; 
+    z-index: 10; 
+    width: 14px; 
+    height: 14px; 
+    border-radius: 50%; 
+    background: #ffffff; 
+    border: 3px solid #03dac6;
+    cursor: grab; 
+    box-shadow: 0 0 10px rgba(3, 218, 198, 0.6), 0 2px 4px rgba(0,0,0,0.5);
+    transition: transform 0.1s ease, background-color 0.2s;
+}
+
+/* Nút tròn đổi màu khi đang được kéo giữ */
+input[type="range"]::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    transform: scale(1.2);
+    background: #03dac6;
+}
+input[type="range"]::-moz-range-thumb:active {
+    cursor: grabbing;
+    transform: scale(1.2);
+    background: #03dac6;
+}
+
+/* Phân biệt nút bấm của End range sang màu Tím hồng (Match với nút Download ZIP của bạn) */
+#rangeEnd::-webkit-slider-thumb {
+    border-color: #bb86fc;
+    box-shadow: 0 0 10px rgba(187, 134, 252, 0.6), 0 2px 4px rgba(0,0,0,0.5);
+}
+#rangeEnd::-moz-range-thumb {
+    border-color: #bb86fc;
+    box-shadow: 0 0 10px rgba(187, 134, 252, 0.6), 0 2px 4px rgba(0,0,0,0.5);
+}
+#rangeEnd::-webkit-slider-thumb:active { background: #bb86fc; }
+#rangeEnd::-moz-range-thumb:active { background: #bb86fc; }
+
+/* --- ĐIỂM NHẤN: HIỆU ỨNG THÀNH PHẦN KẾT NỐI (PROGRESS FILL) --- */
+/* Tạo một thanh dải màu ảo nằm giữa Start và End để người dùng biết khoảng thời gian được chọn */
+.slider-container::before {
+    content: "";
+    position: absolute;
+    height: 6px;
+    background: linear-gradient(90deg, #03dac6, #bb86fc); /* Chuyển màu mượt mà từ Từ -> Đến */
+    border-radius: 4px;
+    z-index: 1;
+    left: var(--range-start, 0%);
+    right: var(--range-end, 100%);
+    pointer-events: none;
+}
+
+    
+    
+    
+    
+    
+    
+    
+    
+        /* Cụm cấu hình chế độ */
+        .config-group {
+            display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+            background: rgba(255,255,255,0.01); padding: 8px 12px; border-radius: 6px; width: 100%;
+        }
+
+        #frameCount { font-weight: bold; color: #03dac6; font-size: 13px; font-family: monospace; margin-left: 4px; }
+
+        /* Hệ thống nút bấm hành động */
+        .action-group {
+            display: flex; gap: 12px; width: 100%; max-width: 600px; margin-top: 4px;
+        }
+
         button.action-btn { 
             color: #000; border: none; padding: 12px 20px; border-radius: 6px; 
-            font-weight: bold; cursor: pointer; font-size: 0.95em; transition: all 0.2s; 
-            white-space: nowrap; flex: 1; width: 100%; max-width: 280px;
+            font-weight: bold; cursor: pointer; font-size: 0.95em; transition: all 0.2s ease; 
+            white-space: nowrap; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
         }
-        #extractBtn { background-color: #03dac6; }
-        #downloadAllBtn { background-color: #bb86fc; }
-        button:disabled { background-color: #444 !important; color: #888 !important; cursor: not-allowed; box-shadow: none !important; }
+        #extractBtn { background-color: #03dac6; box-shadow: 0 4px 12px rgba(3, 218, 198, 0.2); }
+        #extractBtn:not(:disabled):hover { background-color: #01bfa5; }
+        #downloadAllBtn { background-color: #bb86fc; box-shadow: 0 4px 12px rgba(187, 134, 252, 0.2); display: none; }
+        #downloadAllBtn:not(:disabled):hover { background-color: #a370db; }
+        
+        button:disabled { background-color: #444 !important; color: #888 !important; cursor: not-allowed; box-shadow: none !important; transform: none !important; }
 
-        /* Buttons */
-        button.action-btn { color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9em; transition: opacity 0.2s; white-space: nowrap; flex: 1; }
-        #extractBtn { background-color: #03dac6; }
-        #downloadAllBtn { background-color: #bb86fc; display: none; }
-        .tune-btn { background: #3a3a3a; color: #fff; border: 1px solid #555; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
-        button:disabled { background-color: #444 !important; color: #888 !important; cursor: not-allowed; box-shadow: none !important; }
+        /* Tối ưu màn hình nhỏ dưới 480px (Mobile dọc) */
+        @media (max-width: 480px) {
+            body { padding-bottom: 290px; }
+            .controls { padding: 12px 14px; gap: 10px; }
+            .time-inputs { justify-content: space-between; }
+            .config-group { flex-direction: column; gap: 8px; align-items: center; }
+            .action-group { flex-direction: column; gap: 8px; }
+            button.action-btn { padding: 10px; font-size: 0.9em; }
+        }
 
+    
+    
+    
         /* --- GALLERY GRID (GIỐNG DANH SÁCH LƯỚI V2) --- */
         h3.gallery-title { width: 100%; max-width: 95%; margin: 20px auto 10px auto; font-size: 1.2em; color: #fff; display: none;}
         #gallery { 
@@ -211,8 +345,7 @@
 </head>
 <body>
 
-    <!-- MÀN HÌNH LOADING KHỞI TẠO -->
-    <div id="loadingOverlay">
+        <div id="loadingOverlay">
         <div class="loader-box">
             <div class="spinner"></div>
             <h2>Đang khởi tạo cấu trúc ảnh...</h2>
@@ -220,7 +353,6 @@
         </div>
     </div>
 
-    <!-- KHU VỰC KÉO THẢ VIDEO -->
     <div id="welcomeOverlay">
         <div class="upload-icon">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -233,83 +365,72 @@
         <p>Thả tệp video vào đây hoặc chạm để chọn từ thiết bị của bạn</p>
     </div>
 
-    <!-- VÙNG CHỨA VIDEO -->
     <div id="videoContainer">
-        <video id="videoPlayer" controls playsinline></video>
-    </div>
-    
-        <div id="videoContainer">
         <video id="videoPlayer" controls playsinline></video>
     </div>
 
     <div id="extractLoading" style="display: none; text-align: center; margin: 20px auto; width: 100%; max-width: 500px;">
         <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto 12px auto;"></div>
         <p style="color: #03dac6; font-size: 0.95em; margin: 0 0 12px 0;">⏳ Hệ thống đang trích xuất dữ liệu ảnh...</p>
-        <button id="stopExtractBtn" class="tune-btn" style="background: #cf6679; color: #000; border: none; padding: 8px 24px; font-weight: bold; font-size: 0.9em;">
+        <button id="stopExtractBtn" class="tune-btn" style="background: #cf6679; color: #000; border: none; padding: 8px 24px; font-weight: bold; font-size: 0.9em; border-radius: 4px;">
             DỪNG TRÍCH XUẤT
         </button>
     </div>
 
     <h3 class="gallery-title" id="galleryTitle">Ảnh đã trích xuất:</h3>
-
-
-    <!-- LƯỚI ẢNH ĐÃ XỬ LÝ -->
-    <h3 class="gallery-title" id="galleryTitle">Ảnh đã trích xuất:</h3>
     <div id="gallery"></div>
 
-    <!-- PHÓNG TO ẢNH FULLSCREEN -->
     <div id="fullscreenOverlay">
         <span id="closeBtn">&times;</span>
         <img id="fullscreenImg" src="">
     </div>
 
-    <!-- THANH ĐIỀU KHIỂN ĐÁY BIỂN -->
     <div class="controls">
         
-
-        <!-- Hàng 1: Các tham số nhập liệu cấu hình -->
         <div class="controls-row">
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 500px; box-sizing: border-box;">
-                <div style="display: flex; gap: 8px; align-items: center; width: 100%; justify-content: center;">
-                    <label style="font-size:0.85em; color:#aaa;">Khoảng từ:</label>
+            <div class="time-setting-box">
+                <div class="time-inputs">
+                    <span style="font-size:0.85em; color:#aaa;">Từ:</span>
                     <input type="text" id="start" value="00:00:00">
-                    <label style="font-size:0.85em; color:#aaa;">đến</label>
+                    <span style="font-size:0.85em; color:#aaa;">đến</span>
                     <input type="text" id="end" value="00:00:05">
                 </div>
-                <div style="display: flex; gap: 8px; align-items: center; width: 100%; justify-content: center;">
-                    <label style="font-size:0.85em; color:#aaa;">Chế độ:</label>
-                    <select id="modeSelect">
-    <option value="interval">Theo khoảng thời gian</option>
-    <option value="random">Chụp ngẫu nhiên</option>
-</select>
-<span id="intervalOptions" style="font-size:0.85em; color:#aaa;">
-    Mỗi: <input type="number" id="intervalStep" value="0.5" min="0.1" step="0.1" style="width: 55px;"> giây
-</span>
-<span id="randomOptions" style="display: none; font-size:0.85em; color:#aaa;">
-    SL: <input type="number" id="randomCount" value="5" min="1"> ảnh
-</span>
-
-                    <span id="frameCount" style="font-weight: bold; color: #03dac6; font-size: 13px; font-family: monospace;"></span>
+                <div class="slider-container">
+                    <input type="range" id="rangeStart" min="0" max="100" value="0" step="0.1">
+                    <input type="range" id="rangeEnd" min="0" max="100" value="5" step="0.1">
                 </div>
             </div>
         </div>
         
-        <!-- Hàng 2: Thanh trượt kép thời gian -->
         <div class="controls-row">
-            <div class="slider-container">
-                <input type="range" id="rangeStart" min="0" max="100" value="0" step="0.1">
-                <input type="range" id="rangeEnd" min="0" max="100" value="5" step="0.1">
+            <div class="config-group">
+                <div>
+                    <label style="font-size:0.85em; color:#aaa; margin-right: 6px;">Chế độ chụp:</label>
+                    <select id="modeSelect">
+                        <option value="interval">Theo khoảng thời gian</option>
+                        <option value="random">Chụp ngẫu nhiên</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <span id="intervalOptions" style="font-size:0.85em; color:#aaa;">
+                        Mỗi: <input type="number" id="intervalStep" value="0.5" min="0.1" step="0.1"> giây
+                    </span>
+                    <span id="randomOptions" style="display: none; font-size:0.85em; color:#aaa;">
+                        SL: <input type="number" id="randomCount" value="5" min="1"> ảnh
+                    </span>
+                    <span id="frameCount"></span>
+                </div>
             </div>
         </div>
-
-        <!-- Hàng 3: Các nút kích hoạt hành động -->
-        <div class="controls-row">
+        
+        <div class="controls-row action-group">
             <button id="extractBtn" class="action-btn" disabled>Chọn Video Trước</button>
             <button id="downloadAllBtn" class="action-btn">Tải Tất Cả (ZIP)</button>
         </div>
+
     </div>
 
-    <!-- INPUT FILE ẨN -->
     <input type="file" id="videoInput" accept="video/*" style="display: none;">
 
     <script>
@@ -421,11 +542,18 @@ const intervalStepInput = document.getElementById('intervalStep');
             updateInputsFromSliders();
         };
 
+    
+    
                 function updateInputsFromSliders() {
             let valStart = parseFloat(rangeStart.value);
             let valEnd = parseFloat(rangeEnd.value);
             const minGap = 5; // Khoảng cách tối thiểu 5 giây
             const maxDuration = parseFloat(rangeStart.max) || 100;
+const percentStart = (rangeStart.value / maxDuration) * 100;
+const percentEnd = 100 - ((rangeEnd.value / maxDuration) * 100);
+
+sliderContainer.style.setProperty('--range-start', percentStart + '%');
+sliderContainer.style.setProperty('--range-end', percentEnd + '%');
 
             // Nếu tổng thời lượng video nhỏ hơn khoảng cách tối thiểu
             if (maxDuration <= minGap) {
@@ -452,6 +580,8 @@ const intervalStepInput = document.getElementById('intervalStep');
             startInput.value = formatSeconds(rangeStart.value);
             endInput.value = formatSeconds(rangeEnd.value);
             updateFrameCount();
+                
+                
         }
 
 
@@ -755,6 +885,8 @@ const intervalStepInput = document.getElementById('intervalStep');
 // Lắng nghe sự kiện người dùng thay đổi số giây để cập nhật số lượng ảnh dự kiến ngay lập tức
 intervalStepInput.addEventListener('input', updateFrameCount);
 
+    
+    
 
     </script>
 </body>
