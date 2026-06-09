@@ -509,9 +509,9 @@ const intervalStepInput = document.getElementById('intervalStep');
                 isPortraitVideo = false;
             }
             
-            extractBtn.disabled = false;
-            extractBtn.innerText = "Trích xuất khung hình";
-            updateInputsFromSliders();
+                        extractBtn.disabled = false;
+            updateInputsFromSliders(); // Hàm này bên trong đã tự gọi updateFrameCount()
+
         };
 
     
@@ -549,19 +549,33 @@ const intervalStepInput = document.getElementById('intervalStep');
 
 
 
-        function updateFrameCount() {
-    const start = parseTimeToSeconds(startInput.value);
-    const end = parseTimeToSeconds(endInput.value);
-    if (!isNaN(start) && !isNaN(end) && end >= start) {
-        if (modeSelect.value === 'interval') {
-            const step = parseFloat(intervalStepInput.value) || 0.5;
-            const count = Math.floor((end - start) / step) + 1;
-            frameCountDisplay.innerText = `[Dự kiến: ${count} ảnh]`;
-        } else {
-            frameCountDisplay.innerText = `[Dự kiến: ${randomCountInput.value} ảnh]`;
+                function updateFrameCount() {
+            const start = parseTimeToSeconds(startInput.value);
+            const end = parseTimeToSeconds(endInput.value);
+            
+            // Nếu chưa chọn video thì giữ nguyên thông báo gốc
+            if (!video.src || extractBtn.disabled && !isExtracting) {
+                extractBtn.innerText = "Chọn Video Trước";
+                frameCountDisplay.innerText = "";
+                return;
+            }
+
+            if (!isNaN(start) && !isNaN(end) && end >= start) {
+                let count = 0;
+                if (modeSelect.value === 'interval') {
+                    const step = parseFloat(intervalStepInput.value) || 0.5;
+                    count = Math.floor((end - start) / step) + 1;
+                } else {
+                    count = parseInt(randomCountInput.value) || 0;
+                }
+                
+                // Cập nhật trực tiếp số lượng ảnh vào nút bấm chính
+                extractBtn.innerText = `Trích xuất khung hình (${count} ảnh)`;
+                // Xóa nội dung trong span cũ để đỡ bị lặp thông tin trên giao diện
+                frameCountDisplay.innerText = ""; 
+            }
         }
-    }
-}
+
 
 
         function captureFrame(time) {
@@ -799,6 +813,7 @@ const intervalStepInput = document.getElementById('intervalStep');
 
 // Lắng nghe sự kiện người dùng thay đổi số giây để cập nhật số lượng ảnh dự kiến ngay lập tức
 intervalStepInput.addEventListener('input', updateFrameCount);
+randomCountInput.addEventListener('input', updateFrameCount);
 
     
     
