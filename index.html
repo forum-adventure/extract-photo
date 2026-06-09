@@ -3,241 +3,759 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Quản lý Nhiệm vụ Hàng ngày</title>
-
+    <title>Trích xuất khung hình Video - Ncox Hybrid (Pro Edition)</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Nhiệm Vụ">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#2563eb">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/906/906334.png">
+    <meta name="theme-color" content="#121212">
+    
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJzaG9ydF9uYW1lIjogIkZyYW1lRXh0cmFjdG9yIiwKICAibmFtZSI6ICJWaWRlbyBGcmFtZSBFeHRyYWN0b3IgRG93bmxvYWRlciIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzcxMS83MTEyNDUucG5nIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9CiAgXSwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMxMjEyMTIiLAogICJ0aGVtZV9jb2xvciI6ICIjMTIxMjEyIgp9">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        :root { --primary: #2563eb; --secondary: #64748b; --success: #22c55e; --danger: #ef4444; --bg: #f8fafc; --card-bg: #ffffff; --text-main: #1e293b; --text-muted: #64748b; --border: #cbd5e1; --input-bg: #ffffff; --modal-overlay: rgba(0,0,0,0.5); }
-        [data-theme="dark"] { --bg: #0f172a; --card-bg: #1e293b; --text-main: #f1f5f9; --text-muted: #94a3b8; --border: #334155; --input-bg: #1e293b; --modal-overlay: rgba(0,0,0,0.7); }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text-main); display: flex; flex-direction: column; align-items: center; padding: calc(env(safe-area-inset-top) + 20px) 20px 20px 20px; transition: background 0.3s, color 0.3s; margin: 0; }
-        .theme-toggle { margin-bottom: 20px; padding: 8px 16px; cursor: pointer; background: var(--card-bg); border: 1px solid var(--border); color: var(--text-main); border-radius: 20px; font-weight: 600; }
-        .container { background: var(--card-bg); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); width: 100%; max-width: 600px; box-sizing: border-box; }
-        h2 { text-align: center; margin-top: 0; }
-        .current-date { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; }
-        .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        .input-sub-group { display: flex; gap: 10px; }
-        textarea#task-input { padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main); font-size: 16px; outline: none; width: 100%; box-sizing: border-box; font-family: inherit; resize: none; min-height: 46px; max-height: 150px; }
-        select { padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text-main); font-size: 16px; flex: 1; }
-        button#add-btn { flex: 1; padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .task-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); transition: 0.4s; }
-        .fall-out { opacity: 0; transform: scale(0.9) translateY(10px); pointer-events: none; margin-bottom: -45px; }
-        .editable-text { margin-left: 10px; flex: 1; word-break: break-word; outline: none; }
-        .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-left: 10px; font-weight: bold; }
-        .badge-main { background: #fee2e2; color: #ef4444; }
-        .badge-sub { background: #e0f2fe; color: #0ea5e9; }
-        .history-section { margin-top: 30px; border-top: 2px solid var(--border); padding-top: 20px; }
-        .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .history-column { background: rgba(0,0,0,0.02); padding: 10px; border-radius: 8px; min-height: 100px; }
-        [data-theme="dark"] .history-column { background: rgba(255,255,255,0.02); }
-        .column-title { font-size: 0.85rem; font-weight: bold; text-align: center; margin-bottom: 10px; color: var(--text-muted); }
-        .completed-task { color: var(--text-muted); font-size: 0.85rem; flex: 1; display: flex; flex-direction: column; line-height: 1.2; }
-        .task-main-info { display: flex; align-items: flex-start; gap: 4px; text-decoration: line-through; }
-        .task-date { font-size: 0.65rem; opacity: 0.6; margin-top: 2px; text-decoration: none !important; display: block; }
-        .delete-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; padding: 0 5px; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-overlay); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
-        .modal-card { background: var(--card-bg); padding: 20px; border-radius: 12px; width: 100%; max-width: 300px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-modal { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-cancel { background: var(--border); color: var(--text-main); }
-        .btn-confirm { background: var(--danger); color: white; }
+        /* --- KHỞI TẠO NỀN TẢNG GIAO DIỆN ĐỒNG BỘ --- */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            padding: 20px; 
+            background-color: #121212; 
+            color: #e0e0e0; 
+            margin: 0; 
+            padding-bottom: 260px; 
+            min-height: 100vh;
+            display: flex; 
+            flex-direction: column;
+            overscroll-behavior-y: contain; 
+            touch-action: manipulation; 
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        input, textarea {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        button, .action-btn, .tune-btn, .delete-btn, .download-btn {
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* --- LOADING OVERLAY NEON --- */
+        #loadingOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #121212;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .loader-box { text-align: center; padding: 20px; max-width: 90%; }
+        .spinner {
+            width: 60px; height: 60px;
+            border: 4px solid rgba(3, 218, 198, 0.1);
+            border-top-color: #03dac6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px auto;
+            box-shadow: 0 0 15px rgba(3, 218, 198, 0.2);
+        }
+        .loader-box h2 { color: #ffffff; font-size: 1.4em; margin: 0 0 10px 0; letter-spacing: 1px; }
+        .loader-box p { color: #888888; font-size: 0.95em; margin: 0; }
+        #loadingOverlay.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- WELCOME OVERLAY DRAG & DROP --- */
+        #welcomeOverlay {
+            position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; z-index: 10; width: 90%; max-width: 500px;
+            box-sizing: border-box; padding: 40px 20px;
+            border: 2px dashed #444444; border-radius: 16px;
+            background-color: rgba(255, 255, 255, 0.01);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        @media (hover: hover) {
+            #welcomeOverlay:hover {
+                border-color: #888888; background-color: rgba(255, 255, 255, 0.03);
+                transform: translate(-50%, -52%);
+            }
+            #welcomeOverlay:hover .upload-icon { color: #ffffff; transform: translateY(-4px); }
+        }
+        #welcomeOverlay.dragover {
+            border-style: solid; border-color: #03dac6;
+            background-color: rgba(3, 218, 198, 0.06);
+            box-shadow: 0 0 30px rgba(3, 218, 198, 0.25);
+            transform: translate(-50%, -50%) scale(1.02);
+        }
+        #welcomeOverlay.dragover .upload-icon { color: #03dac6; transform: scale(1.1); }
+        .upload-icon { color: #666666; margin-bottom: 16px; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; }
+        #welcomeOverlay h1 { font-size: 1.8em; color: #ffffff; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1.5px; }
+        #welcomeOverlay p { color: #888888; font-size: 0.95em; line-height: 1.5; margin: 0; }
+        body.has-video #welcomeOverlay { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        /* --- VIDEO CONTAINER --- */
+        #videoContainer { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; z-index: 2; gap: 25px; }
+        video { 
+            width: auto; height: auto; max-width: 95%; max-height: 45vh; 
+            border: 2px solid #333; border-radius: 10px; background: #000; display: none;
+        }
+    
+    
+    
+        video.portrait { max-height: 55vh; }
+
+                /* --- CONTROLS BAR (BOTTOM) --- */
+        .controls { 
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: #1a1a1a; padding: 20px; border-top: 1px solid #2d2d2d; 
+            z-index: 1000; display: flex; flex-direction: column; gap: 16px; align-items: center; 
+            box-shadow: 0 -8px 24px rgba(0,0,0,0.6); box-sizing: border-box;
+            touch-action: none; /* Thêm dòng này để chặn trình duyệt cuộn trang khi vuốt ở đây */
+        }
+
+        .controls-row { 
+            display: flex; gap: 12px; align-items: center; justify-content: center; 
+            width: 100%; max-width: 600px; box-sizing: border-box; 
+        }
+        
+        /* Đồng bộ hóa ô nhập liệu và select */
+        input, select { 
+            padding: 10px 12px; background: #2d2d2d; color: white; 
+            border: 1px solid #444; border-radius: 6px; text-align: center; 
+            font-size: 0.9em; outline: none; box-sizing: border-box;
+        }
+        input:focus { border-color: #03dac6; }
+        
+        /* Cấu hình kích thước ô nhập liệu để cân xứng */
+        #start, #end { width: 90px; font-family: monospace; }
+        #randomCount { width: 55px; }
+        #modeSelect { flex: 1; max-width: 200px; text-align: left; }
+
+        /* Tối ưu nhóm nhập liệu phụ thuộc */
+        .input-group {
+            display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+        }
+
+        /* Sliders - Thêm padding hai bên để không bị dính sát lề so với nút bấm */
+        /* Tìm đến đoạn này trong mã nguồn của bạn và cập nhật */
+.slider-container { 
+    position: relative; width: 100%; height: 20px; 
+    margin: 0 10px; display: flex; align-items: center; 
+    cursor: pointer; /* Thêm con trỏ chỉ tay */
+}
+
+        input[type="range"] { position: absolute; pointer-events: none; -webkit-appearance: none; width: 100%; height: 6px; background: #333; border-radius: 5px; outline: none; margin: 0; }
+    
+    
+        input[type="range"]::-webkit-slider-thumb { pointer-events: all; position: relative; z-index: 5; -webkit-appearance: none; width: 18px; height: 18px; background: #03dac6; border-radius: 50%; cursor: pointer; box-shadow: 0 0 8px rgba(3,218,198,0.5); }
+
+        /* Buttons - Chia đều khoảng trống khi xuất hiện cả 2 nút */
+        button.action-btn { 
+            color: #000; border: none; padding: 12px 20px; border-radius: 6px; 
+            font-weight: bold; cursor: pointer; font-size: 0.95em; transition: all 0.2s; 
+            white-space: nowrap; flex: 1; width: 100%; max-width: 280px;
+        }
+        #extractBtn { background-color: #03dac6; }
+        #downloadAllBtn { background-color: #bb86fc; }
+        button:disabled { background-color: #444 !important; color: #888 !important; cursor: not-allowed; box-shadow: none !important; }
+
+        /* Buttons */
+        button.action-btn { color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9em; transition: opacity 0.2s; white-space: nowrap; flex: 1; }
+        #extractBtn { background-color: #03dac6; }
+        #downloadAllBtn { background-color: #bb86fc; display: none; }
+        .tune-btn { background: #3a3a3a; color: #fff; border: 1px solid #555; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
+        button:disabled { background-color: #444 !important; color: #888 !important; cursor: not-allowed; box-shadow: none !important; }
+
+        /* --- GALLERY GRID (GIỐNG DANH SÁCH LƯỚI V2) --- */
+        h3.gallery-title { width: 100%; max-width: 95%; margin: 20px auto 10px auto; font-size: 1.2em; color: #fff; display: none;}
+        #gallery { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+            gap: 16px; width: 95%; max-width: 1200px; margin: 0 auto;
+            box-sizing: border-box; padding-bottom: 40px;
+        }
+        .frame-item { 
+            cursor: pointer; border: 2px solid #2d2d2d; border-radius: 10px; 
+            overflow: hidden; position: relative; background: #000; 
+            aspect-ratio: 16 / 9; transition: border-color 0.2s;
+        }
+        .frame-item.portrait { aspect-ratio: 3 / 4 !important; }
+        .frame-item:hover { border-color: #03dac6; }
+        .frame-item img { width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0; z-index: 1; }
+        .frame-item .info { 
+            position: absolute; bottom: 0; left: 0; width: 100%; 
+            background: rgba(0, 0, 0, 0.85); font-size: 11px; padding: 6px 0; 
+            text-align: center; color: #fff; z-index: 2; box-sizing: border-box; font-family: monospace;
+        }
+
+        /* --- FULLSCREEN OVERLAY --- */
+        #fullscreenOverlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95); z-index: 2000; justify-content: center; align-items: center; cursor: zoom-out;
+        }
+        #fullscreenOverlay img { max-width: 95%; max-height: 95%; border: 2px solid #333; border-radius: 6px; }
+        #closeBtn { position: absolute; top: 20px; right: 30px; color: #cf6679; font-size: 40px; font-weight: bold; cursor: pointer; }
+
+        
+
+        
     </style>
 </head>
 <body>
 
-<button class="theme-toggle" id="theme-toggle">🌙 Chế độ tối</button>
-
-<div class="container">
-    <h2>Nhiệm Vụ Hôm Nay</h2>
-    <div class="current-date" id="display-date"></div>
-    <div class="input-group">
-        <textarea id="task-input" placeholder="Nhập nhiệm vụ mới..." rows="1"></textarea>
-        <div class="input-sub-group">
-            <select id="task-type">
-                <option value="Chính">⭐ Nhiệm vụ Chính</option>
-                <option value="Phụ">🔹 Nhiệm vụ Phụ</option>
-            </select>
-            <button id="add-btn">THÊM</button>
+    <!-- MÀN HÌNH LOADING KHỞI TẠO -->
+    <div id="loadingOverlay">
+        <div class="loader-box">
+            <div class="spinner"></div>
+            <h2>Đang khởi tạo cấu trúc ảnh...</h2>
+            <p>Vui lòng đợi trong giây lát, hệ thống đang thiết lập môi trường.</p>
         </div>
     </div>
-    <div id="active-tasks"></div>
-    <div class="history-section">
-        <div class="history-grid">
-            <div class="history-column"><div class="column-title" style="color: var(--danger);">⭐ CHÍNH</div><div id="history-main"></div></div>
-            <div class="history-column"><div class="column-title" style="color: var(--primary);">🔹 PHỤ</div><div id="history-sub"></div></div>
+
+    <!-- KHU VỰC KÉO THẢ VIDEO -->
+    <div id="welcomeOverlay">
+        <div class="upload-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
         </div>
+        <h1>Trích Khung Hình</h1>
+        <p>Thả tệp video vào đây hoặc chạm để chọn từ thiết bị của bạn</p>
     </div>
-</div>
 
-<div id="delete-modal" class="modal-overlay">
-    <div class="modal-card">
-        <p style="margin: 0; font-weight: 500;">Xoá nhiệm vụ này?</p>
-        <div class="modal-btns">
-            <button class="btn-modal btn-cancel" onclick="window.closeModal()">Huỷ</button>
-            <button class="btn-modal btn-confirm" id="confirm-delete-btn">Xoá</button>
-        </div>
+    <!-- VÙNG CHỨA VIDEO -->
+    <div id="videoContainer">
+        <video id="videoPlayer" controls playsinline></video>
     </div>
-</div>
-
-<script type="module">
-    // Firebase Imports
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-
-    // Configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyAo20_qTCtXl2wkspgi8PpJLaPpgTY_dKM",
-        authDomain: "my-todo-sync-401c3.firebaseapp.com",
-        projectId: "my-todo-sync-401c3",
-        storageBucket: "my-todo-sync-401c3.firebasestorage.app",
-        messagingSenderId: "892634573514",
-        appId: "1:892634573514:web:264e1eace6153399252233"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
     
-    let userId = null;
+        <div id="videoContainer">
+        <video id="videoPlayer" controls playsinline></video>
+    </div>
 
-    // Các biến toàn cục để script thường truy cập được
-    window.tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+    <div id="extractLoading" style="display: none; text-align: center; margin: 20px auto; width: 100%; max-width: 500px;">
+        <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto 12px auto;"></div>
+        <p style="color: #03dac6; font-size: 0.95em; margin: 0 0 12px 0;">⏳ Hệ thống đang trích xuất dữ liệu ảnh...</p>
+        <button id="stopExtractBtn" class="tune-btn" style="background: #cf6679; color: #000; border: none; padding: 8px 24px; font-weight: bold; font-size: 0.9em;">
+            DỪNG TRÍCH XUẤT
+        </button>
+    </div>
+
+    <h3 class="gallery-title" id="galleryTitle">Ảnh đã trích xuất:</h3>
+
+
+    <!-- LƯỚI ẢNH ĐÃ XỬ LÝ -->
+    <h3 class="gallery-title" id="galleryTitle">Ảnh đã trích xuất:</h3>
+    <div id="gallery"></div>
+
+    <!-- PHÓNG TO ẢNH FULLSCREEN -->
+    <div id="fullscreenOverlay">
+        <span id="closeBtn">&times;</span>
+        <img id="fullscreenImg" src="">
+    </div>
+
+    <!-- THANH ĐIỀU KHIỂN ĐÁY BIỂN -->
+    <div class="controls">
+        
+
+        <!-- Hàng 1: Các tham số nhập liệu cấu hình -->
+        <div class="controls-row">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 500px; box-sizing: border-box;">
+                <div style="display: flex; gap: 8px; align-items: center; width: 100%; justify-content: center;">
+                    <label style="font-size:0.85em; color:#aaa;">Khoảng từ:</label>
+                    <input type="text" id="start" value="00:00:00">
+                    <label style="font-size:0.85em; color:#aaa;">đến</label>
+                    <input type="text" id="end" value="00:00:05">
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center; width: 100%; justify-content: center;">
+                    <label style="font-size:0.85em; color:#aaa;">Chế độ:</label>
+                    <select id="modeSelect">
+    <option value="interval">Theo khoảng thời gian</option>
+    <option value="random">Chụp ngẫu nhiên</option>
+</select>
+<span id="intervalOptions" style="font-size:0.85em; color:#aaa;">
+    Mỗi: <input type="number" id="intervalStep" value="0.5" min="0.1" step="0.1" style="width: 55px;"> giây
+</span>
+<span id="randomOptions" style="display: none; font-size:0.85em; color:#aaa;">
+    SL: <input type="number" id="randomCount" value="5" min="1"> ảnh
+</span>
+
+                    <span id="frameCount" style="font-weight: bold; color: #03dac6; font-size: 13px; font-family: monospace;"></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hàng 2: Thanh trượt kép thời gian -->
+        <div class="controls-row">
+            <div class="slider-container">
+                <input type="range" id="rangeStart" min="0" max="100" value="0" step="0.1">
+                <input type="range" id="rangeEnd" min="0" max="100" value="5" step="0.1">
+            </div>
+        </div>
+
+        <!-- Hàng 3: Các nút kích hoạt hành động -->
+        <div class="controls-row">
+            <button id="extractBtn" class="action-btn" disabled>Chọn Video Trước</button>
+            <button id="downloadAllBtn" class="action-btn">Tải Tất Cả (ZIP)</button>
+        </div>
+    </div>
+
+    <!-- INPUT FILE ẨN -->
+    <input type="file" id="videoInput" accept="video/*" style="display: none;">
+
+    <script>
+        const video = document.getElementById('videoPlayer');
+        const videoInput = document.getElementById('videoInput');
+        const gallery = document.getElementById('gallery');
+        const galleryTitle = document.getElementById('galleryTitle');
+        const downloadAllBtn = document.getElementById('downloadAllBtn');
+        const extractBtn = document.getElementById('extractBtn');
+        const startInput = document.getElementById('start');
+        const endInput = document.getElementById('end');
+        const rangeStart = document.getElementById('rangeStart');
+        const rangeEnd = document.getElementById('rangeEnd');
+        const modeSelect = document.getElementById('modeSelect');
+        const randomOptions = document.getElementById('randomOptions');
+        const randomCountInput = document.getElementById('randomCount');
+        const frameCountDisplay = document.getElementById('frameCount');
+        const welcomeOverlay = document.getElementById('welcomeOverlay');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const overlay = document.getElementById('fullscreenOverlay');
+        const fullscreenImg = document.getElementById('fullscreenImg');
+    const intervalOptions = document.getElementById('intervalOptions');
+const intervalStepInput = document.getElementById('intervalStep');
+
+        // BỔ SUNG KHAI BÁO BIẾN MỚI
+        const extractLoading = document.getElementById('extractLoading');
+        const stopExtractBtn = document.getElementById('stopExtractBtn');
+        let isExtracting = false; // Cờ kiểm tra xem có đang chạy trích xuất không
     
-    // Đăng nhập ẩn danh và sync
-    signInAnonymously(auth).then((userCred) => {
-        userId = userCred.user.uid;
-        // Lắng nghe dữ liệu realtime
-        onSnapshot(doc(db, "tasks", userId), (docSnap) => {
-            if (docSnap.exists()) {
-                window.tasks = docSnap.data().list;
-                localStorage.setItem('myTasks', JSON.stringify(window.tasks));
-                window.render();
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        let extractedFrames = []; 
+        let isPortraitVideo = false;
+
+        // Tự động tắt màn hình chờ khi tải xong DOM cơ bản
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { loadingOverlay.classList.add('fade-out'); }, 400);
+        });
+
+        function formatSeconds(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
+        }
+
+        function parseTimeToSeconds(timeStr) {
+            const parts = timeStr.replace(/[^0-9:]/g, '').split(':').reverse();
+            let seconds = 0;
+            if (parts[0]) seconds += parseInt(parts[0]) || 0;     
+            if (parts[1]) seconds += (parseInt(parts[1]) || 0) * 60; 
+            if (parts[2]) seconds += (parseInt(parts[2]) || 0) * 3600; 
+            return seconds;
+        }
+
+        // Kéo thả file chuẩn chỉ như App 2
+        welcomeOverlay.addEventListener('click', () => videoInput.click());
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+            welcomeOverlay.addEventListener(evt, (e) => e.preventDefault(), false);
+        });
+        ['dragenter', 'dragover'].forEach(evt => {
+            welcomeOverlay.addEventListener(evt, () => welcomeOverlay.classList.add('dragover'), false);
+        });
+        ['dragleave', 'drop'].forEach(evt => {
+            welcomeOverlay.addEventListener(evt, () => welcomeOverlay.classList.remove('dragover'), false);
+        });
+        
+        welcomeOverlay.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('video/')) {
+                videoInput.files = files;
+                const event = new Event('change', { bubbles: true });
+                videoInput.dispatchEvent(event);
+            } else {
+                alert("Vui lòng thả một tệp tin định dạng Video hợp lệ!");
             }
         });
-    });
 
-    // Hàm cập nhật lên cloud
-    window.syncToCloud = async () => {
-        if(userId) {
-            await setDoc(doc(db, "tasks", userId), { list: window.tasks });
-        }
-    };
-</script>
+        videoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                video.src = URL.createObjectURL(file);
+                video.style.display = 'block';
+                document.body.classList.add('has-video');
+                gallery.innerHTML = '';
+                galleryTitle.style.display = 'none';
+                downloadAllBtn.style.display = 'none';
+            }
+        });
 
-<script>
-    const taskInput = document.getElementById('task-input');
-    const taskType = document.getElementById('task-type');
-    const addBtn = document.getElementById('add-btn');
-    const activeDiv = document.getElementById('active-tasks');
-    const historyMainDiv = document.getElementById('history-main');
-    const historySubDiv = document.getElementById('history-sub');
-    const themeToggle = document.getElementById('theme-toggle');
-    const displayDate = document.getElementById('display-date');
-    const deleteModal = document.getElementById('delete-modal');
-    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        video.onloadedmetadata = () => {
+            const duration = video.duration;
+            rangeStart.max = duration;
+            rangeEnd.max = duration;
+            rangeStart.value = 0;
+            rangeEnd.value = Math.min(duration, 5);
+            
+            if (video.videoHeight > video.videoWidth) {
+                video.classList.add('portrait');
+                isPortraitVideo = true;
+            } else {
+                video.classList.remove('portrait');
+                isPortraitVideo = false;
+            }
+            
+            extractBtn.disabled = false;
+            extractBtn.innerText = "Trích xuất khung hình";
+            updateInputsFromSliders();
+        };
 
-    let currentDeleteId = null;
-    displayDate.innerText = new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const finishSound = new Audio('./pop.wav');
-    finishSound.volume = 0.4;
+                function updateInputsFromSliders() {
+            let valStart = parseFloat(rangeStart.value);
+            let valEnd = parseFloat(rangeEnd.value);
+            const minGap = 5; // Khoảng cách tối thiểu 5 giây
+            const maxDuration = parseFloat(rangeStart.max) || 100;
 
-    taskInput.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; });
-
-    if (localStorage.getItem('theme') === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        themeToggle.innerText = '☀️ Chế độ sáng';
-    }
-
-    themeToggle.addEventListener('click', () => {
-        let isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-        localStorage.setItem('theme', isDark ? 'light' : 'dark');
-        themeToggle.innerText = isDark ? '🌙 Chế độ tối' : '☀️ Chế độ sáng';
-    });
-
-    function saveAndRender() {
-        localStorage.setItem('myTasks', JSON.stringify(window.tasks));
-        if(window.syncToCloud) window.syncToCloud();
-        render();
-    }
-
-    function addTask() {
-        const text = taskInput.value.trim();
-        if (!text) return;
-        window.tasks.push({ id: Date.now(), text, type: taskType.value, completed: false, date: new Date().toLocaleDateString('vi-VN') });
-        taskInput.value = "";
-        taskInput.style.height = 'auto';
-        saveAndRender();
-    }
-
-    function toggleTask(id, event) {
-        const el = event.target.closest('.task-item');
-        window.tasks = window.tasks.map(t => {
-            if (t.id === id) {
-                if (!t.completed) {
-                    finishSound.currentTime = 0; finishSound.play().catch(()=>{});
-                    const rect = event.target.getBoundingClientRect();
-                    confetti({ particleCount: 100, spread: 60, origin: { x: (rect.left + rect.width/2)/window.innerWidth, y: (rect.top + rect.height/2)/window.innerHeight } });
-                    if (el) el.classList.add('fall-out');
+            // Nếu tổng thời lượng video nhỏ hơn khoảng cách tối thiểu
+            if (maxDuration <= minGap) {
+                rangeStart.value = 0;
+                rangeEnd.value = maxDuration;
+            } else {
+                // Kiểm tra va chạm và giữ khoảng cách 5 giây tùy thuộc vào nút nào đang di chuyển
+                if (valEnd - valStart < minGap) {
+                    if (activeSlider === rangeStart) {
+                        rangeStart.value = valEnd - minGap;
+                    } else if (activeSlider === rangeEnd) {
+                        rangeEnd.value = valStart + minGap;
+                    } else {
+                        // Trường hợp khởi tạo hoặc nhập liệu thủ công
+                        if (valStart + minGap <= maxDuration) {
+                            rangeEnd.value = valStart + minGap;
+                        } else {
+                            rangeStart.value = valEnd - minGap;
+                        }
+                    }
                 }
-                return {...t, completed: !t.completed};
             }
-            return t;
-        });
-        setTimeout(saveAndRender, 400);
+
+            startInput.value = formatSeconds(rangeStart.value);
+            endInput.value = formatSeconds(rangeEnd.value);
+            updateFrameCount();
+        }
+
+
+        function updateFrameCount() {
+    const start = parseTimeToSeconds(startInput.value);
+    const end = parseTimeToSeconds(endInput.value);
+    if (!isNaN(start) && !isNaN(end) && end >= start) {
+        if (modeSelect.value === 'interval') {
+            const step = parseFloat(intervalStepInput.value) || 0.5;
+            const count = Math.floor((end - start) / step) + 1;
+            frameCountDisplay.innerText = `[Dự kiến: ${count} ảnh]`;
+        } else {
+            frameCountDisplay.innerText = `[Dự kiến: ${randomCountInput.value} ảnh]`;
+        }
     }
+}
 
-    window.openDeleteModal = (id) => { currentDeleteId = id; deleteModal.style.display = 'flex'; };
-    window.closeModal = () => { deleteModal.style.display = 'none'; currentDeleteId = null; };
 
-    confirmDeleteBtn.onclick = () => {
-        if (currentDeleteId) {
-            window.tasks = window.tasks.filter(t => t.id !== currentDeleteId);
-            saveAndRender();
-            window.closeModal();
+        function captureFrame(time) {
+            return new Promise((resolve) => {
+                const onSeeked = () => {
+                    video.removeEventListener('seeked', onSeeked);
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(blob => resolve(blob), "image/png");
+                };
+                video.addEventListener('seeked', onSeeked);
+                video.currentTime = time;
+            });
+        }
+
+                // Biến kiểm tra lệnh dừng từ người dùng bên ngoài vòng lặp
+        let shouldStopExtract = false;
+
+        stopExtractBtn.addEventListener('click', () => {
+            shouldStopExtract = true;
+            stopExtractBtn.innerText = "⏳ Đang dừng...";
+            stopExtractBtn.disabled = true;
+        });
+
+        extractBtn.addEventListener('click', async () => {
+            const startTime = parseTimeToSeconds(startInput.value);
+            const endTime = parseTimeToSeconds(endInput.value);
+            if (endTime <= startTime) return alert("Thời gian kết thúc phải lớn hơn bắt đầu!");
+
+            // 1. Reset trạng thái ban đầu
+            shouldStopExtract = false;
+            stopExtractBtn.innerText = "DỪNG TRÍCH XUẤT";
+            stopExtractBtn.disabled = false;
+            
+            gallery.innerHTML = '';
+            extractedFrames = [];
+            downloadAllBtn.style.display = 'none';
+            galleryTitle.style.display = 'none';
+
+            // 2. Hiện khu vực vòng xoay + nút Stop, khóa nút trích xuất chính
+            extractLoading.style.display = 'block';
+            extractBtn.disabled = true;
+
+            // Tính toán danh sách mốc thời gian (giữ nguyên logic gốc của bạn)
+            let timestamps = [];
+            if (modeSelect.value === 'interval') {
+                const step = parseFloat(intervalStepInput.value) || 0.5;
+                for (let t = startTime; t <= endTime; t += step) {
+                    timestamps.push(t);
+                }
+            } else {
+                const count = parseInt(randomCountInput.value);
+                for (let i = 0; i < count; i++) {
+                    timestamps.push(Math.random() * (endTime - startTime) + startTime);
+                }
+                timestamps.sort((a, b) => a - b);
+            }
+
+            // Cuộn màn hình nhẹ xuống vùng đang xử lý để người dùng thấy tiến trình
+            window.scrollTo({ top: extractLoading.offsetTop - 20, behavior: 'smooth' });
+
+            // 3. Vòng lặp trích xuất từng khung hình
+            for (const t of timestamps) {
+                // Kiểm tra xem người dùng có bấm nút STOP hay không trước mỗi khung hình
+                if (shouldStopExtract) {
+                    break; 
+                }
+
+                const blob = await captureFrame(t);
+                const filename = `frame_${t.toFixed(2)}s.png`;
+                const url = URL.createObjectURL(blob);
+                extractedFrames.push({ blob, filename });
+
+                // Hiển thị ảnh dần lên lưới ngay khi trích xuất xong (Tăng trải nghiệm real-time)
+                if (galleryTitle.style.display === 'none') {
+                    galleryTitle.style.display = 'block';
+                }
+
+                const div = document.createElement('div');
+                div.className = 'frame-item';
+                if (isPortraitVideo) div.classList.add('portrait');
+                
+                const img = document.createElement('img');
+                img.src = url;
+                img.onclick = () => {
+                    fullscreenImg.src = url;
+                    overlay.style.display = 'flex';
+                };
+                
+                const info = document.createElement('div');
+                info.className = 'info';
+                info.innerText = `${t.toFixed(2)}s`;
+                
+                div.appendChild(img);
+                div.appendChild(info);
+                gallery.appendChild(div);
+            }
+
+            // 4. Dọn dẹp giao diện sau khi kết thúc (Dù hoàn thành hay bị bấm Stop)
+            extractLoading.style.display = 'none';
+            extractBtn.disabled = false;
+
+            if (extractedFrames.length > 0) {
+                downloadAllBtn.style.display = 'inline-block';
+            } else {
+                galleryTitle.style.display = 'none';
+            }
+        });
+
+
+        downloadAllBtn.addEventListener('click', async () => {
+            const originalText = downloadAllBtn.innerText;
+            downloadAllBtn.disabled = true;
+            downloadAllBtn.innerText = "⏳ Đang nén ZIP...";
+            
+            const zip = new JSZip();
+            extractedFrames.forEach(f => zip.file(f.filename, f.blob));
+            const content = await zip.generateAsync({ type: "blob" });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = "frames_extracted.zip";
+            link.click();
+            
+            downloadAllBtn.disabled = false;
+            downloadAllBtn.innerText = originalText;
+        });
+
+        overlay.addEventListener('click', () => overlay.style.display = 'none');
+
+        // --- ANTI PULL-TO-REFRESH & ANTI ZOOM GIỐNG APP VIDEO ---
+          window.addEventListener('touchstart', (e) => {
+            // Nếu chạm vào thanh điều khiển hoặc các thẻ input/button, hủy xử lý chặn cuộn kéo của window
+            if (e.target.closest('.controls') || e.target.closest('input') || e.target.closest('select') || e.target.closest('button')) {
+                window.initialTouchY = undefined;
+                return;
+            }
+            if (e.touches.length !== 1) return;
+            window.initialTouchY = e.touches[0].clientY;
+        }, { passive: true });
+
+             
+
+
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = (new Date()).getTime();
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select')) return;
+            if (now - lastTouchEnd <= 300) {
+                if (e.cancelable) e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            e.preventDefault();
+        }, false);
+    
+    // --- LOGIC DI CHUYỂN NÚT TRÒN GẦN NHẤT KHI BẤM VÀO THANH TRƯỢT & VUỐT MƯỢT MÀ ---
+    const sliderContainer = document.querySelector('.slider-container');
+    let activeSlider = null; // Lưu trữ input range nào đang được kéo
+
+    sliderContainer.addEventListener('pointerdown', (e) => {
+        // Lấy kích thước và vị trí của thanh trượt
+        const rect = sliderContainer.getBoundingClientRect();
+        
+        // Hàm tính toán giá trị thời gian dựa trên vị trí con trỏ (X)
+        function getValueFromX(clientX) {
+            let percentage = (clientX - rect.left) / rect.width;
+            if (percentage < 0) percentage = 0;
+            if (percentage > 1) percentage = 1;
+            const maxDuration = parseFloat(rangeStart.max) || 100;
+            return percentage * maxDuration;
+        }
+
+        const clickedValue = getValueFromX(e.clientX);
+        
+        // Lấy giá trị hiện tại của 2 nút
+        const valStart = parseFloat(rangeStart.value);
+        const valEnd = parseFloat(rangeEnd.value);
+        
+        // Tính khoảng cách từ vị trí bấm đến 2 nút để chọn nút gần nhất
+        const distToStart = Math.abs(clickedValue - valStart);
+        const distToEnd = Math.abs(clickedValue - valEnd);
+        
+        if (distToStart < distToEnd) {
+            activeSlider = rangeStart;
+        } else {
+            activeSlider = rangeEnd;
+        }
+        
+        // Cập nhật ngay lập tức vị trí nút tròn đến ngón tay/con trỏ
+        activeSlider.value = clickedValue;
+        updateInputsFromSliders();
+
+        // Kích hoạt tính năng Capture để khóa mục tiêu vuốt vào nút tròn này kể cả khi vuốt lệch ra ngoài thanh trượt
+        sliderContainer.setPointerCapture(e.pointerId);
+    });
+
+       // Sự kiện di chuyển ngón tay (Vuốt)
+    sliderContainer.addEventListener('pointermove', (e) => {
+        if (!activeSlider) return; 
+
+        const rect = sliderContainer.getBoundingClientRect();
+        let percentage = (e.clientX - rect.left) / rect.width;
+        if (percentage < 0) percentage = 0;
+        if (percentage > 1) percentage = 1;
+        
+        const maxDuration = parseFloat(rangeStart.max) || 100;
+        const newValue = percentage * maxDuration;
+
+        activeSlider.value = newValue;
+        updateInputsFromSliders();
+
+        // BỔ SUNG: Tua video theo vị trí con trỏ/ngón tay đang vuốt trực tiếp
+        if (video.src) {
+            video.currentTime = newValue;
+        }
+    });
+
+
+    // Sự kiện nhấc ngón tay lên hoặc hủy bỏ (Bảo mật vuốt)
+    const endPointerTracking = (e) => {
+        if (activeSlider) {
+            sliderContainer.releasePointerCapture(e.pointerId);
+            activeSlider = null; // Giải phóng slider đang kéo
         }
     };
 
-    function updateTaskText(id, newText) {
-        window.tasks = window.tasks.map(t => t.id === id ? {...t, text: newText} : t);
-        if(window.syncToCloud) window.syncToCloud();
-        localStorage.setItem('myTasks', JSON.stringify(window.tasks));
-    }
+    sliderContainer.addEventListener('pointerup', endPointerTracking);
+    sliderContainer.addEventListener('pointercancel', endPointerTracking);
 
-    window.render = function() {
-        activeDiv.innerHTML = ""; historyMainDiv.innerHTML = ""; historySubDiv.innerHTML = "";
-        window.tasks.filter(t => !t.completed).forEach(t => {
-            const item = document.createElement('div');
-            item.className = 'task-item';
-            item.innerHTML = `<input type="checkbox" onclick="toggleTask(${t.id}, event)"><span class="editable-text" contenteditable="true" onblur="updateTaskText(${t.id}, this.innerText)">${t.text}</span><span class="badge ${t.type === 'Chính' ? 'badge-main' : 'badge-sub'}">${t.type}</span>`;
-            activeDiv.appendChild(item);
+
+        // --- TỰ ĐỘNG TUA VIDEO KHI NHẬP THỜI GIAN THỦ CÔNG ---
+    function handleManualTimeInput(inputElement, sliderElement) {
+        inputElement.addEventListener('change', () => {
+            const timeStr = inputElement.value.trim();
+            let seconds = parseTimeToSeconds(timeStr);
+            const maxDuration = parseFloat(rangeStart.max) || 0;
+
+            // Kiểm tra giới hạn thời lượng video
+            if (isNaN(seconds) || seconds < 0) seconds = 0;
+            if (seconds > maxDuration) seconds = maxDuration;
+
+            // Đồng bộ lại giá trị lên thanh trượt slider
+            sliderElement.value = seconds;
+
+            // Cập nhật lại định dạng chuẩn chỉnh (phòng trường hợp người dùng nhập thiếu số)
+            inputElement.value = formatSeconds(seconds);
+
+            // Kiểm tra va chạm khoảng cách 5 giây và đồng bộ ô còn lại
+            updateInputsFromSliders();
+
+            // Tua video đến vị trí vừa nhập
+            if (video.src) {
+                video.currentTime = parseFloat(sliderElement.value);
+            }
         });
-        window.tasks.filter(t => t.completed).sort((a,b) => b.id - a.id).forEach(t => {
-            const item = document.createElement('div');
-            item.className = 'task-item';
-            item.style.padding = "8px 5px";
-            item.innerHTML = `<div class="completed-task"><div class="task-main-info"><span>✓</span><span>${t.text}</span></div><span class="task-date">${t.date || ''}</span></div><button class="delete-btn" onclick="window.openDeleteModal(${t.id})">×</button>`;
-            (t.type === 'Chính' ? historyMainDiv : historySubDiv).appendChild(item);
+
+        // Hỗ trợ nhấn Enter để xác nhận tua ngay lập tức thay vì đợi mất focus
+        inputElement.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                inputElement.blur(); // Kích hoạt sự kiện 'change'
+            }
         });
-        const emptyMsg = "<p style='text-align:center; font-size:0.7rem; opacity:0.4; margin-top:10px;'>Trống</p>";
-        if (!historyMainDiv.innerHTML) historyMainDiv.innerHTML = emptyMsg;
-        if (!historySubDiv.innerHTML) historySubDiv.innerHTML = emptyMsg;
     }
 
-    addBtn.addEventListener('click', addTask);
-    taskInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addTask(); } });
-    window.render();
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log('Offline mode failed', err)); });
+    // Kích hoạt tính năng cho cả 2 ô nhập liệu
+    handleManualTimeInput(startInput, rangeStart);
+    handleManualTimeInput(endInput, rangeEnd);
+    
+    modeSelect.addEventListener('change', () => {
+    if (modeSelect.value === 'interval') {
+        intervalOptions.style.display = 'inline';
+        randomOptions.style.display = 'none';
+    } else {
+        intervalOptions.style.display = 'none';
+        randomOptions.style.display = 'inline';
     }
-</script>
+    updateFrameCount();
+});
+
+// Lắng nghe sự kiện người dùng thay đổi số giây để cập nhật số lượng ảnh dự kiến ngay lập tức
+intervalStepInput.addEventListener('input', updateFrameCount);
+
+
+    </script>
 </body>
 </html>
