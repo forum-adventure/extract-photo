@@ -442,6 +442,7 @@
         const ctx = canvas.getContext('2d');
         let extractedFrames = []; 
         let isPortraitVideo = false;
+        let shouldStopExtract = false;
 
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => { loadingOverlay.classList.add('fade-out'); }, 400);
@@ -461,6 +462,15 @@
             if (parts[1]) seconds += (parseInt(parts[1]) || 0) * 60; 
             if (parts[2]) seconds += (parseInt(parts[2]) || 0) * 3600; 
             return seconds;
+        }
+
+        // Giải phóng dung lượng ObjectURL cũ để tránh rò rỉ bộ nhớ (Memory Leak)
+        function clearOldFrames() {
+            extractedFrames.forEach(f => {
+                if (f.url) URL.revokeObjectURL(f.url);
+            });
+            gallery.innerHTML = '';
+            extractedFrames = [];
         }
 
         welcomeOverlay.addEventListener('click', () => videoInput.click());
@@ -489,10 +499,10 @@
         videoInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
+                clearOldFrames(); // Giải phóng RAM ảnh cũ khi đổi video mới
                 video.src = URL.createObjectURL(file);
                 video.style.display = 'block';
                 document.body.classList.add('has-video');
-                gallery.innerHTML = '';
                 galleryTitle.style.display = 'none';
                 downloadAllBtn.style.display = 'none';
             }
@@ -503,7 +513,9 @@
             rangeStart.max = duration;
             rangeEnd.max = duration;
             rangeStart.value = 0;
-            rangeEnd.value = Math.min(duration, 5);
+            
+            // Sửa lỗi logic chặn khoảng cách nếu video ngắn hơn 5 giây
+            rangeEnd.value = duration > 5 ? 5 : duration;
             
             if (video.videoHeight > video.videoWidth) {
                 video.classList.add('portrait');
@@ -520,27 +532,29 @@
         function updateInputsFromSliders() {
             let valStart = parseFloat(rangeStart.value);
             let valEnd = parseFloat(rangeEnd.value);
-            const minGap = 5; 
             const maxDuration = parseFloat(rangeStart.max) || 100;
+            
+            // Gap tối thiểu linh hoạt dựa theo thời lượng video để tránh bị lỗi nút nhảy lố
+            const minGap = maxDuration > 5 ? 1 : 0.1; 
 
             if (valStart > valEnd - minGap) {
                 if (document.activeElement === rangeStart) {
-                    rangeStart.value = valEnd - minGap;
-                    valStart = valEnd - minGap;
+                    rangeStart.value = Math.max(0, valEnd - minGap);
+                    valStart = parseFloat(rangeStart.value);
                 } else {
-                    rangeEnd.value = valStart + minGap;
-                    valEnd = valStart + minGap;
+                    rangeEnd.value = Math.min(maxDuration, valStart + minGap);
+                    valEnd = parseFloat(rangeEnd.value);
                 }
             }
 
-            const percent1 = (rangeStart.value / maxDuration) * 100;
-            const percent2 = (rangeEnd.value / maxDuration) * 100;
+            const percent1 = (valStart / maxDuration) * 100;
+            const percent2 = (valEnd / maxDuration) * 100;
 
             sliderFill.style.left = percent1 + "%";
             sliderFill.style.width = (percent2 - percent1) + "%";
 
-            startInput.value = formatSeconds(rangeStart.value);
-            endInput.value = formatSeconds(rangeEnd.value);
+            startInput.value = formatSeconds(valStart);
+            endInput.value = formatSeconds(valEnd);
             updateFrameCount();
         }
 
@@ -570,19 +584,31 @@
 
         function captureFrame(time) {
             return new Promise((resolve) => {
+                let isResolved = false;
+                
                 const onSeeked = () => {
+                    if (isResolved) return;
+                    isResolved = true;
                     video.removeEventListener('seeked', onSeeked);
                     canvas.width = video.videoWidth;
                     canvas.height = video.videoHeight;
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                     canvas.toBlob(blob => resolve(blob), "image/png");
                 };
+
+                // Anti-Freeze: Đề phòng trường hợp video lỗi/seeked không phản hồi, tự động bỏ qua sau 2 giây
+                setTimeout(() => {
+                    if (!isResolved) {
+                        isResolved = true;
+                        video.removeEventListener('seeked', onSeeked);
+                        resolve(null);
+                    }
+                }, 2000);
+
                 video.addEventListener('seeked', onSeeked);
                 video.currentTime = time;
             });
         }
-
-        let shouldStopExtract = false;
 
         stopExtractBtn.addEventListener('click', () => {
             shouldStopExtract = true;
@@ -600,8 +626,7 @@
             stopExtractBtn.disabled = false;
             isExtracting = true;
             
-            gallery.innerHTML = '';
-            extractedFrames = [];
+            clearOldFrames(); // Giải phóng dung lượng ảnh cũ trước khi chạy phiên mới
             downloadAllBtn.style.display = 'none';
             galleryTitle.style.display = 'none';
 
@@ -622,53 +647,64 @@
                 timestamps.sort((a, b) => a - b);
             }
 
-            window.scrollTo({ top: extractLoading.offsetTop - 20, behavior: 'smooth' });
+                    window.scrollTo({ top: extractLoading.offsetTop - 20, behavior: 'smooth' });
 
-            for (const t of timestamps) {
-                if (shouldStopExtract) {
-                    break; 
-                }
+        // Hiện tiêu đề gallery trước để chuẩn bị hứng ảnh hiển thị real-time
+        galleryTitle.style.display = 'block';
 
-                const blob = await captureFrame(t);
-                const filename = `frame_${t.toFixed(2)}s.png`;
-                const url = URL.createObjectURL(blob);
-                extractedFrames.push({ blob, filename });
-
-                if (galleryTitle.style.display === 'none') {
-                    galleryTitle.style.display = 'block';
-                }
-
-                const div = document.createElement('div');
-                div.className = 'frame-item';
-                if (isPortraitVideo) div.classList.add('portrait');
-                
-                const img = document.createElement('img');
-                img.src = url;
-                img.onclick = () => {
-                    fullscreenImg.src = url;
-                    overlay.style.display = 'flex';
-                };
-                
-                const info = document.createElement('div');
-                info.className = 'info';
-                info.innerText = `${t.toFixed(2)}s`;
-                
-                div.appendChild(img);
-                div.appendChild(info);
-                gallery.appendChild(div);
+        for (const t of timestamps) {
+            if (shouldStopExtract) {
+                break; 
             }
+
+            const blob = await captureFrame(t);
+            if (!blob) continue; 
+
+            const filename = `frame_${t.toFixed(2)}s.png`;
+            const url = URL.createObjectURL(blob);
+            extractedFrames.push({ blob, filename, url });
+
+            const div = document.createElement('div');
+            div.className = 'frame-item';
+            if (isPortraitVideo) div.classList.add('portrait');
+            
+            const img = document.createElement('img');
+            img.src = url;
+            img.onclick = () => {
+                fullscreenImg.src = url;
+                overlay.style.display = 'flex';
+            };
+            
+            const info = document.createElement('div');
+            info.className = 'info';
+            info.innerText = `${t.toFixed(2)}s`;
+            
+            div.appendChild(img);
+            div.appendChild(info);
+            
+            // HIỂN THỊ NGAY: Đẩy trực tiếp vào gallery thay vì gom vào fragment
+            gallery.appendChild(div);
+
+            // CƠ CHẾ LIVE-RENDER: Ép trình duyệt vẽ lại UI trước khi chạy tiếp vòng lặp sau
+            await new Promise(resolve => requestAnimationFrame(resolve));
+        }
+
+        // Cập nhật trạng thái nút tải dựa trên kết quả cuối cùng
+        if (extractedFrames.length > 0) {
+            downloadAllBtn.style.display = 'inline-block';
+        } else {
+            galleryTitle.style.display = 'none';
+        }
+
 
             extractLoading.style.display = 'none';
             isExtracting = false;
             extractBtn.disabled = false;
             updateFrameCount();
-
-            if (extractedFrames.length > 0) {
-                downloadAllBtn.style.display = 'inline-block';
-            } else {
-                galleryTitle.style.display = 'none';
-            }
         });
+    
+    
+    
 
         downloadAllBtn.addEventListener('click', async () => {
             const originalText = downloadAllBtn.innerText;
@@ -679,10 +715,14 @@
             extractedFrames.forEach(f => zip.file(f.filename, f.blob));
             const content = await zip.generateAsync({ type: "blob" });
             const link = document.createElement('a');
-            link.href = URL.createObjectURL(content);
+            const downloadUrl = URL.createObjectURL(content);
+            link.href = downloadUrl;
             link.download = "frames_extracted.zip";
             link.click();
             
+            // Giải phóng link tải ZIP sau khi tải xong để sạch bộ nhớ
+            setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+
             downloadAllBtn.disabled = false;
             downloadAllBtn.innerText = originalText;
         });
@@ -713,21 +753,33 @@
             e.preventDefault();
         }, false);
     
-        const sliderContainer = document.querySelector('.slider-container');
-        let activeSlider = null; 
+        // Tối ưu hóa Z-Index thông minh khi click/chạm vào các thanh Range ngầm sát nhau
+        const handleZIndexOptimization = (clientX) => {
+            const rect = rangeStart.getBoundingClientRect();
+            const clickPercent = (clientX - rect.left) / rect.width;
+            const duration = parseFloat(rangeStart.max) || 100;
+            const targetTime = clickPercent * duration;
+
+            const distStart = Math.abs(parseFloat(rangeStart.value) - targetTime);
+            const distEnd = Math.abs(parseFloat(rangeEnd.value) - targetTime);
+
+            if (distStart < distEnd) {
+                rangeStart.style.zIndex = 4;
+                rangeEnd.style.zIndex = 3;
+            } else {
+                rangeStart.style.zIndex = 3;
+                rangeEnd.style.zIndex = 4;
+            }
+        };
 
         [rangeStart, rangeEnd].forEach(el => {
+            el.addEventListener('mousedown', (e) => handleZIndexOptimization(e.clientX));
+            el.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 0) handleZIndexOptimization(e.touches[0].clientX);
+            }, { passive: true });
+
             el.oninput = (e) => {
-                if (e.target === rangeStart) {
-                    rangeStart.style.zIndex = 4;
-                    rangeEnd.style.zIndex = 3;
-                } else {
-                    rangeStart.style.zIndex = 3;
-                    rangeEnd.style.zIndex = 4;
-                }
-
                 updateInputsFromSliders();
-
                 if (video.src) {
                     video.currentTime = parseFloat(e.target.value);
                 }
