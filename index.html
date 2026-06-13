@@ -346,7 +346,7 @@
     </div>
 
     <div id="videoContainer">
-        <video id="videoPlayer" controls playsinline></video>
+        <video id="videoPlayer" controls playsinline muted preload="auto"></video>
     </div>
 
     <div id="extractLoading" style="display: none; text-align: center; margin: 20px auto; width: 100%; max-width: 500px;">
@@ -497,16 +497,31 @@
         });
 
         videoInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                clearOldFrames(); // Giải phóng RAM ảnh cũ khi đổi video mới
-                video.src = URL.createObjectURL(file);
-                video.style.display = 'block';
-                document.body.classList.add('has-video');
-                galleryTitle.style.display = 'none';
-                downloadAllBtn.style.display = 'none';
-            }
-        });
+    const file = e.target.files[0];
+    if (file) {
+        clearOldFrames(); 
+        
+        const videoURL = URL.createObjectURL(file);
+        video.src = videoURL;
+        video.style.display = 'block';
+        document.body.classList.add('has-video');
+        galleryTitle.style.display = 'none';
+        downloadAllBtn.style.display = 'none';
+
+        // Kỹ thuật kích nổ luồng giải mã (Video Pipeline Warm-up) dành riêng cho iOS
+        video.load();
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                // Video đã được kích hoạt thành công, lập tức dừng lại để không chạy tiếp
+                video.pause();
+            }).catch(error => {
+                console.log("iOS Video Warm-up prevented: ", error);
+            });
+        }
+    }
+});
+
 
         video.onloadedmetadata = () => {
             const duration = video.duration;
