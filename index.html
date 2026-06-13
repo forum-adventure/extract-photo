@@ -11,7 +11,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#121212">
     
-    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJzaG9ydF9uYW1lIjogIkZyYW1lRXh0cmFjdG9yIiwKICAibmFtZSI6ICJWaWRlbyBGcmFtZSBFeHRyYWN0b3IgRG93bmxvYWRlciIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzcxMS83MTEyNDUucG5nIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9CiAgXSwKICAic3RhcnRxdXJsIjogIi4iLAogICJkaXNwbGF5IjogIHN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMxMjEyMTIiLAogICJ0aGVtZV9jb2xvciI6ICIjMTIxMjEyIgp9">
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJzaG9ydF9uYW1lIjogIkZyYW1lRXh0cmFjdG9yIiwKICAibmFtZSI6ICJWaWRlbyBGcmFtZSBFeHRyYWN0b3IgRG93bmxvYWRlciIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzcxMS83MTEyNDUucG5nIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9CiAgXSwKICAic3RhcnRxdXJsIjogIi4iLA "vIjogIHN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMxMjEyMTIiLAogICJ0aGVtZV9jb2xvciI6ICIjMTIxMjEyIgp9">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
@@ -351,8 +351,8 @@
 
     <div id="extractLoading" style="display: none; text-align: center; margin: 20px auto; width: 100%; max-width: 500px;">
         <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto 12px auto;"></div>
-        <p style="color: #03dac6; font-size: 0.95em; margin: 0 0 12px 0;">⏳ System is extracting image data...</p>
-        <button id="stopExtractBtn" class="tune-btn" style="background: #cf6679; color: #000; border: none; padding: 8px 24px; font-weight: bold; font-size: 0.9em; border-radius: 4px;">
+        <p id="extractProgressText" style="color: #03dac6; font-size: 0.95em; margin: 0 0 12px 0;">⏳ System is extracting image data...</p>
+        <button id="stopExtractBtn" class="tune-btn" style="background: #cf6679; color: #000; border: none; padding: 8px 24px; font-weight: bold; font-size: 0.9em; border-radius: 4px; cursor: pointer;">
             STOP EXTRACTION
         </button>
     </div>
@@ -436,6 +436,7 @@
         const intervalStepInput = document.getElementById('intervalStep');
         const extractLoading = document.getElementById('extractLoading');
         const stopExtractBtn = document.getElementById('stopExtractBtn');
+        const extractProgressText = document.getElementById('extractProgressText');
         
         let isExtracting = false; 
         const canvas = document.createElement('canvas');
@@ -464,7 +465,6 @@
             return seconds;
         }
 
-        // Giải phóng dung lượng ObjectURL cũ để tránh rò rỉ bộ nhớ (Memory Leak)
         function clearOldFrames() {
             extractedFrames.forEach(f => {
                 if (f.url) URL.revokeObjectURL(f.url);
@@ -499,7 +499,7 @@
         videoInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                clearOldFrames(); // Giải phóng RAM ảnh cũ khi đổi video mới
+                clearOldFrames();
                 video.src = URL.createObjectURL(file);
                 video.style.display = 'block';
                 document.body.classList.add('has-video');
@@ -513,8 +513,6 @@
             rangeStart.max = duration;
             rangeEnd.max = duration;
             rangeStart.value = 0;
-            
-            // Sửa lỗi logic chặn khoảng cách nếu video ngắn hơn 5 giây
             rangeEnd.value = duration > 5 ? 5 : duration;
             
             if (video.videoHeight > video.videoWidth) {
@@ -533,8 +531,6 @@
             let valStart = parseFloat(rangeStart.value);
             let valEnd = parseFloat(rangeEnd.value);
             const maxDuration = parseFloat(rangeStart.max) || 100;
-            
-            // Gap tối thiểu linh hoạt dựa theo thời lượng video để tránh bị lỗi nút nhảy lố
             const minGap = maxDuration > 5 ? 1 : 0.1; 
 
             if (valStart > valEnd - minGap) {
@@ -596,14 +592,13 @@
                     canvas.toBlob(blob => resolve(blob), "image/png");
                 };
 
-                // Anti-Freeze: Đề phòng trường hợp video lỗi/seeked không phản hồi, tự động bỏ qua sau 2 giây
                 setTimeout(() => {
                     if (!isResolved) {
                         isResolved = true;
                         video.removeEventListener('seeked', onSeeked);
                         resolve(null);
                     }
-                }, 2000);
+                }, 1500); // Rút ngắn anti-freeze xuống 1.5s để giải phóng luồng nhanh hơn
 
                 video.addEventListener('seeked', onSeeked);
                 video.currentTime = time;
@@ -626,10 +621,9 @@
             stopExtractBtn.disabled = false;
             isExtracting = true;
             
-            clearOldFrames(); // Giải phóng dung lượng ảnh cũ trước khi chạy phiên mới
+            clearOldFrames();
             downloadAllBtn.style.display = 'none';
             galleryTitle.style.display = 'none';
-
             extractLoading.style.display = 'block';
             extractBtn.disabled = true;
 
@@ -647,64 +641,71 @@
                 timestamps.sort((a, b) => a - b);
             }
 
-                    window.scrollTo({ top: extractLoading.offsetTop - 20, behavior: 'smooth' });
+            window.scrollTo({ top: extractLoading.offsetTop - 20, behavior: 'smooth' });
+            galleryTitle.style.display = 'block';
 
-        // Hiện tiêu đề gallery trước để chuẩn bị hứng ảnh hiển thị real-time
-        galleryTitle.style.display = 'block';
+            const totalFrames = timestamps.length;
+            let fragment = document.createDocumentFragment();
+            let lastRenderTime = Date.now();
 
-        for (const t of timestamps) {
-            if (shouldStopExtract) {
-                break; 
+            for (let i = 0; i < totalFrames; i++) {
+                if (shouldStopExtract) break;
+
+                const t = timestamps[i];
+                extractProgressText.innerText = `⏳ Extracting: ${i + 1} / ${totalFrames} frames...`;
+
+                const blob = await captureFrame(t);
+                if (!blob) continue; 
+
+                const filename = `frame_${t.toFixed(2)}s.png`;
+                const url = URL.createObjectURL(blob);
+                extractedFrames.push({ blob, filename, url });
+
+                const div = document.createElement('div');
+                div.className = 'frame-item';
+                if (isPortraitVideo) div.classList.add('portrait');
+                
+                const img = document.createElement('img');
+                img.src = url;
+                img.onclick = () => {
+                    fullscreenImg.src = url;
+                    overlay.style.display = 'flex';
+                };
+                
+                const info = document.createElement('div');
+                info.className = 'info';
+                info.innerText = `${t.toFixed(2)}s`;
+                
+                div.appendChild(img);
+                div.appendChild(info);
+                fragment.appendChild(div);
+
+                // CHẾ ĐỘ THỜI GIAN THỰC TỐI ƯU: Đổ ảnh vào giao diện mỗi 200ms thay vì ép từng khung hình
+                if (Date.now() - lastRenderTime > 200 || i === totalFrames - 1) {
+                    gallery.appendChild(fragment);
+                    fragment = document.createDocumentFragment(); // Khởi tạo lại mảnh đệm mới
+                    lastRenderTime = Date.now();
+                    // Nhường luồng cho CPU xử lý các sự kiện click (Nút STOP)
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
             }
 
-            const blob = await captureFrame(t);
-            if (!blob) continue; 
+            // Đổ nốt những khung hình còn sót lại trong fragment vào DOM
+            if (fragment.children.length > 0) {
+                gallery.appendChild(fragment);
+            }
 
-            const filename = `frame_${t.toFixed(2)}s.png`;
-            const url = URL.createObjectURL(blob);
-            extractedFrames.push({ blob, filename, url });
-
-            const div = document.createElement('div');
-            div.className = 'frame-item';
-            if (isPortraitVideo) div.classList.add('portrait');
-            
-            const img = document.createElement('img');
-            img.src = url;
-            img.onclick = () => {
-                fullscreenImg.src = url;
-                overlay.style.display = 'flex';
-            };
-            
-            const info = document.createElement('div');
-            info.className = 'info';
-            info.innerText = `${t.toFixed(2)}s`;
-            
-            div.appendChild(img);
-            div.appendChild(info);
-            
-            // HIỂN THỊ NGAY: Đẩy trực tiếp vào gallery thay vì gom vào fragment
-            gallery.appendChild(div);
-
-            // CƠ CHẾ LIVE-RENDER: Ép trình duyệt vẽ lại UI trước khi chạy tiếp vòng lặp sau
-            await new Promise(resolve => requestAnimationFrame(resolve));
-        }
-
-        // Cập nhật trạng thái nút tải dựa trên kết quả cuối cùng
-        if (extractedFrames.length > 0) {
-            downloadAllBtn.style.display = 'inline-block';
-        } else {
-            galleryTitle.style.display = 'none';
-        }
-
+            if (extractedFrames.length > 0) {
+                downloadAllBtn.style.display = 'inline-block';
+            } else {
+                galleryTitle.style.display = 'none';
+            }
 
             extractLoading.style.display = 'none';
             isExtracting = false;
             extractBtn.disabled = false;
             updateFrameCount();
         });
-    
-    
-    
 
         downloadAllBtn.addEventListener('click', async () => {
             const originalText = downloadAllBtn.innerText;
@@ -720,7 +721,6 @@
             link.download = "frames_extracted.zip";
             link.click();
             
-            // Giải phóng link tải ZIP sau khi tải xong để sạch bộ nhớ
             setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
 
             downloadAllBtn.disabled = false;
@@ -753,7 +753,6 @@
             e.preventDefault();
         }, false);
     
-        // Tối ưu hóa Z-Index thông minh khi click/chạm vào các thanh Range ngầm sát nhau
         const handleZIndexOptimization = (clientX) => {
             const rect = rangeStart.getBoundingClientRect();
             const clickPercent = (clientX - rect.left) / rect.width;
