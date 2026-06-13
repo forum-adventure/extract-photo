@@ -317,7 +317,108 @@
             background: rgba(0, 0, 0, 0.95); z-index: 2000; justify-content: center; align-items: center; cursor: zoom-out;
         }
         #fullscreenOverlay img { max-width: 95%; max-height: 95%; border: 2px solid #333; border-radius: 6px; }
-        #closeBtn { position: absolute; top: 20px; right: 30px; color: #cf6679; font-size: 40px; font-weight: bold; cursor: pointer; }
+    
+    
+       #closeBtn { position: absolute; top: 20px; right: 30px; color: #cf6679; font-size: 40px; font-weight: bold; cursor: pointer; }
+    
+            @media (max-width: 480px) {
+            /* 1. Giảm padding của body để chừa không gian hiển thị */
+            body { 
+                padding: 6px;
+                /* Giảm vùng đệm dưới vừa đủ với thanh control mới đã thu gọn */
+                padding-bottom: 190px; 
+            }
+
+            /* 2. Thu gọn tổng thể bảng điều khiển */
+            .controls { 
+                padding: 8px 10px; 
+                gap: 6px; 
+            }
+
+            .controls-row {
+                gap: 6px;
+            }
+
+            /* 3. Tối ưu hộp chọn thời gian (From/To) trên cùng 1 hàng ngang */
+            .time-setting-box {
+                padding: 6px 8px;
+                gap: 4px;
+            }
+
+            .time-inputs {
+                justify-content: center;
+                gap: 6px;
+                font-size: 12px;
+            }
+
+            /* Thu nhỏ input thời gian để không chiếm diện tích ngang */
+            #start, #end { 
+                width: 70px; 
+                padding: 4px 6px; 
+                font-size: 12px;
+            }
+
+            /* Thu nhỏ thanh kéo slider */
+            .dual-slider-wrapper {
+                height: 24px;
+            }
+            input[type="range"]::-webkit-slider-thumb {
+                width: 16px;
+                height: 16px;
+            }
+
+            /* 4. ÉP cấu hình chế độ (Capture Mode) nằm gọn trên 1 hàng ngang, KHÔNG cho xuống dòng */
+            .config-group {
+                flex-direction: row !important; /* Ghi đè lệnh cũ */
+                flex-wrap: nowrap !important;
+                justify-content: space-between;
+                align-items: center;
+                gap: 4px;
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+
+            .config-group > div {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .config-group label {
+                font-size: 11px !important;
+                margin-right: 2px !important;
+            }
+
+            /* Thu nhỏ Select và các ô điền thông số phụ */
+            #modeSelect { 
+                min-width: 100px; 
+                padding: 4px 6px; 
+                font-size: 11px;
+            }
+            #intervalStep, #randomCount { 
+                width: 42px; 
+                padding: 4px 2px; 
+                font-size: 11px;
+            }
+            #intervalOptions, #randomOptions {
+                font-size: 11px !important;
+                white-space: nowrap;
+            }
+
+            /* 5. Cho 2 nút bấm chính nằm song song nhau thay vì xếp dọc */
+            .action-group {
+                flex-direction: row !important; /* Nút Extract và Download nằm chung 1 hàng */
+                gap: 6px;
+                margin-top: 2px;
+            }
+
+            button.action-btn { 
+                padding: 10px 6px; 
+                font-size: 12px; 
+                height: 38px; /* Khống chế chiều cao nút */
+            }
+        }
+
     </style>
 </head>
 <body>
