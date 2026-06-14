@@ -863,44 +863,45 @@ let scrollIntervalId = null;
         }
 
                                 function captureFrame(time) {
-            return new Promise((resolve) => {
-                let isResolved = false;
-                const safeTime = Math.min(time, video.duration - 0.1);
+    return new Promise((resolve) => {
+        let isResolved = false;
+        const safeTime = Math.min(time, video.duration - 0.1);
 
-                const onSeekEnded = async () => {
-                    if (isResolved) return;
-                    isResolved = true;
-                    
-                    video.removeEventListener('seeked', onSeekEnded);
-                    video.removeEventListener('ended', onSeekEnded);
-                    
-                    try {
-                        // Tối ưu phần cứng: Trích xuất trực tiếp thành ImageBitmap từ Video Pipeline
-                        const bitmap = await createImageBitmap(video);
-                        resolve(bitmap);
-                    } catch (err) {
-                        console.error("Lỗi tạo ImageBitmap: ", err);
-                        resolve(null);
-                    }
-                };
+        const onSeekEnded = async () => {
+            if (isResolved) return;
+            isResolved = true;
+            
+            video.removeEventListener('seeked', onSeekEnded);
+            video.removeEventListener('ended', onSeekEnded);
+            
+            // Đợi 20ms để GPU kịp nạp đầy pixel vào khung hình hiện tại trước khi tạo Bitmap
+            await new Promise(r => setTimeout(r, 20)); 
 
-                const timeoutId = setTimeout(() => {
-                    if (!isResolved) {
-                        isResolved = true;
-                        video.removeEventListener('seeked', onSeekEnded);
-                        video.removeEventListener('ended', onSeekEnded);
-                        console.warn(`Bỏ qua khung hình tại ${safeTime}s do trình duyệt nghẽn.`);
-                        resolve(null);
-                    }
-                }, 800); // Giảm xuống 800ms để tăng tốc lướt qua đoạn lỗi trên máy yếu
+            try {
+                const bitmap = await createImageBitmap(video);
+                resolve(bitmap);
+            } catch (err) {
+                console.error("Lỗi tạo ImageBitmap: ", err);
+                resolve(null);
+            }
+        };
 
-                
-                video.addEventListener('ended', onSeekEnded);
-                video.addEventListener('seeked', onSeekEnded);
-                
-                video.currentTime = safeTime;
-            });
-        }
+        const timeoutId = setTimeout(() => {
+            if (!isResolved) {
+                isResolved = true;
+                video.removeEventListener('seeked', onSeekEnded);
+                video.removeEventListener('ended', onSeekEnded);
+                console.warn(`Bỏ qua khung hình tại ${safeTime}s do trình duyệt nghẽn.`);
+                resolve(null);
+            }
+        }, 1200); // Tăng timeout lên 1200ms để chờ các máy cấu hình thấp
+
+        video.addEventListener('seeked', onSeekEnded);
+        video.addEventListener('ended', onSeekEnded);
+        video.currentTime = safeTime;
+    });
+}
+
 
 
 
