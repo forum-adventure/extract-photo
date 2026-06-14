@@ -894,8 +894,10 @@ let scrollIntervalId = null;
                     }
                 }, 800); // Giảm xuống 800ms để tăng tốc lướt qua đoạn lỗi trên máy yếu
 
-                video.addEventListener('seeked', onSeekEnded);
+                
                 video.addEventListener('ended', onSeekEnded);
+                video.addEventListener('seeked', onSeekEnded);
+                
                 video.currentTime = safeTime;
             });
         }
