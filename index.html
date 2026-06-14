@@ -182,24 +182,29 @@
         #modeSelect { min-width: 160px; text-align: left; }
         #intervalStep, #randomCount { width: 60px; }
 
-        /* --- DUAL SLIDER --- */
+                /* --- DUAL SLIDER RE-DESIGNED --- */
         .dual-slider-wrapper {
             position: relative;
             width: 100%;
-            height: 40px;
+            height: 32px;
             display: flex;
             align-items: center;
+            margin: 4px 0;
+            padding: 0 4px;
+            box-sizing: border-box;
         }
 
         .slider-track {
             position: absolute;
+            left: 4px;
+            right: 4px;
             top: 50%;
             transform: translateY(-50%);
-            width: 100%;
             height: 6px;
-            background-color: #2d2d2d;
-            border-radius: 3px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
             z-index: 1;
+            pointer-events: none;
         }
 
         .slider-fill {
@@ -208,54 +213,74 @@
             transform: translateY(-50%);
             height: 6px;
             background: linear-gradient(90deg, #03dac6, #bb86fc);
-            border-radius: 3px;
+            border-radius: 4px;
             z-index: 2;
+            pointer-events: none;
+            transition: left 0.05s ease-out, width 0.05s ease-out;
         }
 
-        input[type="range"] {
+        .slider-control-input {
             position: absolute;
             width: 100%;
-            height: 6px;
-            top: 50%;
-            transform: translateY(-50%);
+            height: 100%;
+            top: 0;
+            left: 0;
             background: none;
             pointer-events: none;
             -webkit-appearance: none;
             appearance: none;
             margin: 0;
+            padding: 0;
             z-index: 3;
             outline: none;
         }
 
-        input[type="range"]::-webkit-slider-thumb {
+        /* Đầu kéo bên trái (Start) */
+        #rangeStart::-webkit-slider-thumb {
             pointer-events: all;
             -webkit-appearance: none;
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            background: #fff;
+            background: #ffffff;
             border: 3px solid #03dac6;
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(3, 218, 198, 0.5);
-            transition: transform 0.1s;
+            box-shadow: 0 2px 8px rgba(3, 218, 198, 0.4);
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.2); }
-
-        #rangeEnd::-webkit-slider-thumb { 
-            border-color: #bb86fc; 
-            box-shadow: 0 0 10px rgba(187, 134, 252, 0.5); 
-        }
-
-        input[type="range"]::-moz-range-thumb {
+        /* Đầu kéo bên phải (End) */
+        #rangeEnd::-webkit-slider-thumb {
             pointer-events: all;
-            width: 16px;
-            height: 16px;
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            background: #fff;
-            border: 3px solid #03dac6;
+            background: #ffffff;
+            border: 3px solid #bb86fc;
             cursor: pointer;
+            box-shadow: 0 2px 8px rgba(187, 134, 252, 0.4);
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        #rangeEnd::-moz-range-thumb { border-color: #bb86fc; }
+
+        #rangeStart::-webkit-slider-thumb:active,
+        #rangeEnd::-webkit-slider-thumb:active {
+            transform: scale(1.25);
+        }
+
+        /* Hỗ trợ Firefox */
+        .slider-control-input::-moz-range-thumb {
+            pointer-events: all;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            border: 3px solid #03dac6;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        #rangeEnd::-moz-range-thumb {
+            border-color: #bb86fc;
+        }
 
         .config-group {
             display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
@@ -478,12 +503,13 @@
                     <span style="font-size:0.85em; color:#aaa;">to</span>
                     <input type="text" id="end" value="00:00:05">
                 </div>
-                <div class="dual-slider-wrapper" id="sliderWrapper">
+                               <div class="dual-slider-wrapper" id="sliderWrapper">
                     <div class="slider-track"></div>
                     <div class="slider-fill" id="sliderFill"></div>
-                    <input type="range" id="rangeStart" min="0" max="100" value="0" step="0.01">
-                    <input type="range" id="rangeEnd" min="0" max="100" value="5" step="0.01">
+                    <input type="range" id="rangeStart" class="slider-control-input" min="0" max="100" value="0" step="0.01">
+                    <input type="range" id="rangeEnd" class="slider-control-input" min="0" max="100" value="5" step="0.01">
                 </div>
+
             </div>
         </div>
         
@@ -873,8 +899,10 @@
         }, false);
     
         // Tối ưu hóa Z-Index thông minh khi click/chạm vào các thanh Range ngầm sát nhau
+                // --- LOGIC XỬ LÝ ĐA ĐIỂM VÀ TỐI ƯU HÓA Z-INDEX CHO SLIDER ---
         const handleZIndexOptimization = (clientX) => {
             const rect = rangeStart.getBoundingClientRect();
+            // Tính toán tỷ lệ phần trăm vị trí nhấn trên thanh slider
             const clickPercent = (clientX - rect.left) / rect.width;
             const duration = parseFloat(rangeStart.max) || 100;
             const targetTime = clickPercent * duration;
@@ -882,28 +910,46 @@
             const distStart = Math.abs(parseFloat(rangeStart.value) - targetTime);
             const distEnd = Math.abs(parseFloat(rangeEnd.value) - targetTime);
 
+            // Đầu kéo nào nằm gần điểm nhấn của ngón tay/chuột hơn sẽ được ưu tiên nổi lên trên
             if (distStart < distEnd) {
-                rangeStart.style.zIndex = 4;
-                rangeEnd.style.zIndex = 3;
+                rangeStart.style.zIndex = "5";
+                rangeEnd.style.zIndex = "4";
             } else {
-                rangeStart.style.zIndex = 3;
-                rangeEnd.style.zIndex = 4;
+                rangeStart.style.zIndex = "4";
+                rangeEnd.style.zIndex = "5";
             }
         };
 
         [rangeStart, rangeEnd].forEach(el => {
+            // Xử lý tối ưu hóa lớp bấm ngay khi chạm/click vào vùng chồng lấn
             el.addEventListener('mousedown', (e) => handleZIndexOptimization(e.clientX));
             el.addEventListener('touchstart', (e) => {
                 if (e.touches.length > 0) handleZIndexOptimization(e.touches[0].clientX);
             }, { passive: true });
 
-            el.oninput = (e) => {
+            // Lắng nghe sự kiện kéo liên tục (Input Event)
+            el.addEventListener('input', (e) => {
+                let valStart = parseFloat(rangeStart.value);
+                let valEnd = parseFloat(rangeEnd.value);
+                const maxDuration = parseFloat(rangeStart.max) || 100;
+                const minGap = maxDuration > 5 ? 0.5 : 0.05; // Gap thích ứng thông minh chống dính nút
+
+                // Chặn cứng không cho đầu Start vượt qua đầu End và ngược lại
+                if (e.target === rangeStart && valStart > valEnd - minGap) {
+                    rangeStart.value = Math.max(0, valEnd - minGap);
+                } else if (e.target === rangeEnd && valEnd < valStart + minGap) {
+                    rangeEnd.value = Math.min(maxDuration, valStart + minGap);
+                }
+
                 updateInputsFromSliders();
-                if (video.src) {
+
+                // Cập nhật khung hình preview trên Video Player ngay lập tức theo thời gian thực
+                if (video.src && !isNaN(video.duration)) {
                     video.currentTime = parseFloat(e.target.value);
                 }
-            };
+            });
         });
+
 
         function handleManualTimeInput(inputElement, sliderElement) {
             inputElement.addEventListener('change', () => {
@@ -947,6 +993,8 @@
 
         intervalStepInput.addEventListener('input', updateFrameCount);
         randomCountInput.addEventListener('input', updateFrameCount);
+    // THÊM DÒNG NÀY VÀO CUỐI SCRIPT ĐỂ KHỞI TẠO ĐÚNG VỊ TRÍ KHI MỞ TRANG
+        updateInputsFromSliders();
     </script>
 </body>
 </html>
