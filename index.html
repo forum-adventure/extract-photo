@@ -325,13 +325,29 @@
         .frame-item { 
             cursor: pointer; border: 2px solid #2d2d2d; border-radius: 10px; 
             overflow: hidden; position: relative; background: #000; 
-            aspect-ratio: 16 / 9; transition: border-color 0.2s;
+            /* Bỏ aspect-ratio cố định để khung tự co giãn theo chiều cao thực của ảnh */
+            height: auto; 
+            transition: border-color 0.2s;
+            display: flex;
+            flex-direction: column;
         }
-        .frame-item.portrait { aspect-ratio: 3 / 4 !important; }
+        /* Bỏ class portrait vì khung đã tự động co giãn theo mọi tỷ lệ video */
         .frame-item:hover { border-color: #03dac6; }
-        .frame-item img { width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        .frame-item img { 
+            width: 100%; 
+            height: auto; 
+            /* Đổi từ cover thành contain hoặc bỏ hẳn để ảnh hiển thị trọn vẹn không bị crop */
+            object-fit: contain; 
+            display: block; 
+            /* Chuyển từ vị trí tuyệt đối sang tương đối để không đè lên thanh thông tin */
+            position: relative; 
+            z-index: 1; 
+        }
         .frame-item .info { 
-            position: absolute; bottom: 0; left: 0; width: 100%; 
+            /* Đưa thanh hiển thị số giây về trạng thái bình thường ở đáy ảnh */
+            position: relative; 
+            bottom: 0; left: 0; width: 100%; 
             background: rgba(0, 0, 0, 0.85); font-size: 11px; padding: 6px 0; 
             text-align: center; color: #fff; z-index: 2; box-sizing: border-box; font-family: monospace;
         }
