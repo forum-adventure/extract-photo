@@ -570,10 +570,11 @@
     <h3 class="gallery-title" id="galleryTitle">Extracted Frames:</h3>
     <div id="gallery"></div>
 
-    <div id="fullscreenOverlay">
+        <div id="fullscreenOverlay">
         <span id="closeBtn">&times;</span>
-        <img id="fullscreenImg" src="">
+        <img id="fullscreenImg" src="" draggable="false">
     </div>
+
 
     <div class="controls">
         <div class="controls-row">
@@ -944,12 +945,17 @@ scrollIntervalId = setInterval(() => {
             div.className = 'frame-item';
             if (isPortraitVideo) div.classList.add('portrait');
             
-            const img = document.createElement('img');
+                        const img = document.createElement('img');
             img.src = url;
+            img.setAttribute('draggable', 'false'); // 🔥 CHẶN KÉO THẢ MẶC ĐỊNH
             img.onclick = () => {
                 fullscreenImg.src = url;
                 overlay.style.display = 'flex';
             };
+            
+            // 🔥 CHẶN SỰ KIỆN KÉO BẰNG JS ĐỂ KHÔNG XUẤT HIỆN ẢNH MỜ THEO TAY
+            img.addEventListener('dragstart', (e) => e.preventDefault());
+
             
             const info = document.createElement('div');
             info.className = 'info';
