@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Video Frame Extractor - Ncox Hybrid (Pro Edition)</title>
     <link rel="icon" type="image/png" href="favicon.png">
     
@@ -1012,7 +1013,16 @@ scrollIntervalId = setInterval(() => {
             downloadAllBtn.innerText = originalText;
         });
 
-        overlay.addEventListener('click', () => overlay.style.display = 'none');
+        // Cho phép click vào bất kỳ vị trí nào thuộc khu vực overlay (ảnh, vùng đen, nút X) để đóng nhanh
+overlay.addEventListener('click', () => {
+    overlay.style.display = 'none';
+});
+
+// Ngăn sự kiện đóng bị lỗi nếu lỡ bấm trượt hoặc kéo nhẹ trên máy tính
+fullscreenImg.addEventListener('click', (e) => {
+    // Nếu muốn bấm vào CHÍNH GIỮA ẢNH vẫn tắt được hoàn toàn giống điện thoại:
+    overlay.style.display = 'none';
+});
 
         window.addEventListener('touchstart', (e) => {
             if (e.target.closest('.controls') || e.target.closest('input') || e.target.closest('select') || e.target.closest('button')) {
