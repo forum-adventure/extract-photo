@@ -767,39 +767,48 @@ let scrollIntervalId = null;
             }
         }
 
-                function captureFrame(time) {
+                        function captureFrame(time) {
             return new Promise((resolve) => {
                 let isResolved = false;
                 
-                const onSeeked = () => {
+                // LỚP BẢO VỆ 1: Chống chạm vạch kết thúc video (Chữa lỗi treo ở giây cuối)
+                const safeTime = Math.min(time, video.duration - 0.1);
+
+                const onSeekEnded = () => {
                     if (isResolved) return;
                     isResolved = true;
-                    video.removeEventListener('seeked', onSeeked);
                     
-                    // Đảm bảo canvas lấy đúng kích thước gốc của video
+                    // Hủy lắng nghe trên cả 2 kênh sự kiện để sạch bộ nhớ
+                    video.removeEventListener('seeked', onSeekEnded);
+                    video.removeEventListener('ended', onSeekEnded);
+                    
+                    // Tiến hành vẽ khung hình lên canvas
                     canvas.width = video.videoWidth;
                     canvas.height = video.videoHeight;
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                     canvas.toBlob(blob => resolve(blob), "image/png");
                 };
 
-                // CHỐNG TREO (Anti-Freeze): Tự động bỏ qua nếu luồng giải mã bị nghẽn quá 1.5 giây
+                // LỚP BẢO VỆ 2: Cản phá đóng băng (Anti-Freeze Timeout)
                 const timeoutId = setTimeout(() => {
                     if (!isResolved) {
                         isResolved = true;
-                        video.removeEventListener('seeked', onSeeked);
-                        console.warn(`Đã bỏ qua khung hình tại ${time}s do phản hồi chậm.`);
+                        video.removeEventListener('seeked', onSeekEnded);
+                        video.removeEventListener('ended', onSeekEnded);
+                        console.warn(`Bỏ qua khung hình tại ${safeTime}s do trình duyệt không phản hồi.`);
                         resolve(null);
                     }
-                }, 1500);
+                }, 1200); // Tối ưu xuống 1.2s để ứng dụng lướt qua đoạn lỗi nhanh hơn
 
-                // 🔥 SỬA LỖI CORE: Đăng ký lắng nghe sự kiện TRƯỚC khi gán currentTime
-                video.addEventListener('seeked', onSeeked);
+                // LỚP BẢO VỆ 3: Đăng ký song song cả 2 sự kiện để bẫy mọi phản hồi từ trình duyệt
+                video.addEventListener('seeked', onSeekEnded);
+                video.addEventListener('ended', onSeekEnded);
                 
-                // Kích hoạt thay đổi thời gian sau khi trình duyệt đã sẵn sàng bắt sự kiện
-                video.currentTime = time;
+                // Kích hoạt luồng giải mã hình ảnh
+                video.currentTime = safeTime;
             });
         }
+
 
 
         stopExtractBtn.addEventListener('click', () => {
