@@ -975,14 +975,8 @@ let scrollIntervalId = null;
                 const div = document.createElement('div');
                 div.className = 'frame-item';
                 
-                // 1. Tạo một thẻ <a> bọc bên ngoài canvas để kích hoạt tính năng chuột phải / lưu ảnh của trình duyệt
-const linkWrapper = document.createElement('a');
-linkWrapper.download = filename;
-linkWrapper.style.textDecoration = 'none';
-linkWrapper.style.display = 'block';
-                
                 // 1. Dùng canvas nhỏ làm ảnh Thumbnail nháp để không tốn RAM sinh URL Blob
-               
+                // 1. Nâng độ phân giải Thumbnail nháp lên 350px để nét hơn trên màn hình Mobile cao cấp
 const thumbCanvas = document.createElement('canvas');
 thumbCanvas.width = video.videoWidth;   // Chiều rộng gốc
 thumbCanvas.height = video.videoHeight; // Chiều cao gốc
@@ -993,34 +987,11 @@ thumbCtx.imageSmoothingQuality = 'high';
 
 thumbCtx.drawImage(bitmap, 0, 0, thumbCanvas.width, thumbCanvas.height);
 
-// 3. Kỹ thuật Kích Hoạt Ngầm (Lazy-Blob): Chỉ sinh file JPG khi người dùng rà chuột hoặc chạm vào ảnh
-const generateBlobOnDemand = () => {
-    if (!linkWrapper.href || linkWrapper.href.startsWith(window.location.origin)) {
-        thumbCanvas.toBlob((blob) => {
-            if (blob) {
-                // Giải phóng liên kết cũ nếu có để tránh rò rỉ RAM
-                if (linkWrapper.href && linkWrapper.href.startsWith('blob:')) {
-                    URL.revokeObjectURL(linkWrapper.href);
-                }
-                linkWrapper.href = URL.createObjectURL(blob);
-            }
-        }, "image/jpeg", 0.9); // Nén JPG 90% chất lượng gốc giống nút tải đơn lẻ
-    }
-};
-
-// Lắng nghe các sự kiện tương tác trước khi người dùng kịp bấm chuột phải hoặc lưu ảnh
-thumbCanvas.addEventListener('mouseenter', generateBlobOnDemand);
-thumbCanvas.addEventListener('touchstart', generateBlobOnDemand, { passive: true });
-
-                
-                
                 // Click vào ảnh nháp thì chuyển bitmap thành ảnh chất lượng cao để xem Fullscreen
                 thumbCanvas.onclick = () => {
                     renderHighResToElement(bitmap, fullscreenImg);
                     overlay.style.display = 'flex';
                 };
-                
-                
                 
                 // 2. Tạo khu vực thông tin và nút Tải riêng biệt (Download Button)
                 const infoContainer = document.createElement('div');
@@ -1061,10 +1032,9 @@ thumbCanvas.addEventListener('touchstart', generateBlobOnDemand, { passive: true
                 infoContainer.appendChild(info);
                 infoContainer.appendChild(singleDownloadBtn);
                 
-                linkWrapper.appendChild(thumbCanvas); // Bọc canvas vào trong thẻ <a>
-div.appendChild(linkWrapper);
-div.appendChild(infoContainer); // infoContainer chứa nút 📥 cũ của bạn vẫn giữ nguyên
-gallery.appendChild(div);
+                div.appendChild(thumbCanvas);
+                div.appendChild(infoContainer);
+                gallery.appendChild(div);
 
                 // Throttling Render: Cứ 3 ảnh cho máy nghỉ 10ms tránh nghẽn
                 renderCounter++;
