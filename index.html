@@ -566,6 +566,11 @@
         const intervalStepInput = document.getElementById('intervalStep');
         const extractLoading = document.getElementById('extractLoading');
         const stopExtractBtn = document.getElementById('stopExtractBtn');
+    
+    // --- THÊM CÁC BIẾN NÀY ĐỂ QUẢN LÝ TỰ ĐỘNG CUỘN ---
+let isAutoScrolling = false;
+let scrollIntervalId = null;
+
         
         let isExtracting = false; 
         const canvas = document.createElement('canvas');
@@ -776,26 +781,38 @@
             galleryTitle.style.display = 'none';
 
             extractLoading.style.display = 'block';
-            extractBtn.disabled = true;
+extractBtn.disabled = true;
 
-            let timestamps = [];
-            if (modeSelect.value === 'interval') {
-                const step = parseFloat(intervalStepInput.value) || 0.5;
-                for (let t = startTime; t <= endTime; t += step) {
-                    timestamps.push(t);
-                }
-            } else {
-                const count = parseInt(randomCountInput.value);
-                for (let i = 0; i < count; i++) {
-                    timestamps.push(Math.random() * (endTime - startTime) + startTime);
-                }
-                timestamps.sort((a, b) => a - b);
-            }
+let timestamps = [];
+if (modeSelect.value === 'interval') {
+    const step = parseFloat(intervalStepInput.value) || 0.5;
+    for (let t = startTime; t <= endTime; t += step) {
+        timestamps.push(t);
+    }
+} else {
+    const count = parseInt(randomCountInput.value);
+    for (let i = 0; i < count; i++) {
+        timestamps.push(Math.random() * (endTime - startTime) + startTime);
+    }
+    timestamps.sort((a, b) => a - b);
+}
 
-                    window.scrollTo({ top: extractLoading.offsetTop - 20, behavior: 'smooth' });
+// Hiện tiêu đề gallery trước để chuẩn bị hứng ảnh hiển thị real-time
+// Hiện tiêu đề gallery trước để chuẩn bị hứng ảnh hiển thị real-time
+galleryTitle.style.display = 'block';
 
-        // Hiện tiêu đề gallery trước để chuẩn bị hứng ảnh hiển thị real-time
-        galleryTitle.style.display = 'block';
+// --- BẮT ĐẦU KÍCH HOẠT TỰ ĐỘNG CUỘN LIÊN TỤC KHÔNG NGỪNG ---
+isAutoScrolling = true;
+scrollIntervalId = setInterval(() => {
+    if (isAutoScrolling) {
+        window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: 'smooth' // Cuộn mượt liên tục xuống đáy trang
+        });
+    }
+}, 100); // Cập nhật vị trí mỗi 100ms để bám sát ảnh mới
+
+
 
         for (const t of timestamps) {
             if (shouldStopExtract) {
@@ -841,6 +858,15 @@
             galleryTitle.style.display = 'none';
         }
 
+        // --- TẮT TỰ ĐỘNG CUỘN KHI XỬ LÝ XONG HOẶC BỊ DỪNG ---
+        isAutoScrolling = false;
+        if (scrollIntervalId) {
+            clearInterval(scrollIntervalId);
+            scrollIntervalId = null;
+        }
+
+        extractLoading.style.display = 'none';
+        isExtracting = false;
 
             extractLoading.style.display = 'none';
             isExtracting = false;
@@ -995,6 +1021,32 @@
         randomCountInput.addEventListener('input', updateFrameCount);
     // THÊM DÒNG NÀY VÀO CUỐI SCRIPT ĐỂ KHỞI TẠO ĐÚNG VỊ TRÍ KHI MỞ TRANG
         updateInputsFromSliders();
+    
+    // --- HÀM NGẮT TỰ ĐỘNG CUỘN KHI CÓ TÁC ĐỘNG TỪ NGƯỜI DÙNG ---
+function stopAutoScrollOnUserInteraction() {
+    if (isAutoScrolling) {
+        isAutoScrolling = false;
+        if (scrollIntervalId) {
+            clearInterval(scrollIntervalId);
+            scrollIntervalId = null;
+        }
+        console.log("Auto-scroll stopped by user interaction.");
+    }
+}
+
+// Lắng nghe sự kiện chạm tay trên thiết bị di động (Mobile Touch)
+window.addEventListener('touchstart', stopAutoScrollOnUserInteraction, { passive: true });
+
+// Lắng nghe sự kiện cuộn chuột hoặc vuốt bánh xe (Desktop Wheel / Trackpad)
+window.addEventListener('wheel', stopAutoScrollOnUserInteraction, { passive: true });
+
+// Đề phòng trường hợp người dùng tương tác bằng phím điều hướng
+window.addEventListener('keydown', (e) => {
+    if (['ArrowUp', 'ArrowDown', 'Space', 'PageUp', 'PageDown'].includes(e.key)) {
+        stopAutoScrollOnUserInteraction();
+    }
+});
+
     </script>
 </body>
 </html>
