@@ -479,6 +479,47 @@
             }
         }
 
+    /* Lớp chặn toàn bộ tương tác khi đang trích xuất */
+/* Khóa tương tác và chuyển toàn bộ chữ, input, select sang màu xám */
+.controls.disabled-all {
+    pointer-events: none; /* Khóa click, touch, slider */
+    cursor: not-allowed;
+    color: #666666 !important; /* Đổi màu toàn bộ chữ thường sang màu xám */
+}
+
+/* Ép các thẻ input, select và nhãn đếm ảnh bên trong sang màu xám */
+.controls.disabled-all input,
+.controls.disabled-all select,
+.controls.disabled-all label,
+.controls.disabled-all span,
+.controls.disabled-all #frameCount {
+    color: #666666 !important;
+    border-color: #3d3d3d !important; /* Làm xám đường viền của ô nhập liệu */
+}
+
+/* Đổi màu 2 nút bấm chính (Extract và Download ZIP) sang màu xám */
+.controls.disabled-all .action-btn {
+    background-color: #2d2d2d !important;
+    color: #666666 !important;
+    box-shadow: none !important;
+}
+
+/* Biến đổi thanh slider (Dual Slider) sang tông màu xám */
+.controls.disabled-all .slider-fill {
+    background: #444444 !important; /* Mất màu gradient, chuyển thành xám cứng */
+    pointer-events: none !important; /* 🔥 THÊM DÒNG NÀY: Khóa cứng click/kéo trên Chrome/Safari/iOS */
+}
+.controls.disabled-all .slider-control-input::-webkit-slider-thumb {
+    border-color: #666666 !important; /* Viền nút kéo sang xám */
+    box-shadow: none !important;
+    pointer-events: none !important; /* 🔥 THÊM DÒNG NÀY: Khóa cứng click/kéo trên Chrome/Safari/iOS */
+}
+.controls.disabled-all .slider-control-input::-moz-range-thumb {
+    border-color: #666666 !important;
+    box-shadow: none !important;
+}
+
+
     </style>
 </head>
 <body>
@@ -834,6 +875,10 @@ let scrollIntervalId = null;
             extractLoading.style.display = 'block';
 extractBtn.disabled = true;
 
+// Khóa toàn bộ bảng điều khiển (ngoại trừ khu vực hiển thị Loading & nút STOP)
+document.querySelector('.controls').classList.add('disabled-all');
+
+
 let timestamps = [];
 if (modeSelect.value === 'interval') {
     const step = parseFloat(intervalStepInput.value) || 0.5;
@@ -916,12 +961,12 @@ scrollIntervalId = setInterval(() => {
             scrollIntervalId = null;
         }
 
-        extractLoading.style.display = 'none';
-        isExtracting = false;
+        
 
             extractLoading.style.display = 'none';
             isExtracting = false;
             extractBtn.disabled = false;
+                document.querySelector('.controls').classList.remove('disabled-all');
             updateFrameCount();
         });
     
@@ -1022,8 +1067,11 @@ scrollIntervalId = setInterval(() => {
 
                 // Cập nhật khung hình preview trên Video Player ngay lập tức theo thời gian thực
                 if (video.src && !isNaN(video.duration)) {
-                    video.currentTime = parseFloat(e.target.value);
-                }
+    // Tránh gán giá trị max tuyệt đối khi kéo tay
+    const targetTime = parseFloat(e.target.value);
+    video.currentTime = Math.min(targetTime, video.duration - 0.1);
+}
+
             });
         });
 
