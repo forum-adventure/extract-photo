@@ -793,7 +793,17 @@ let scrollIntervalId = null;
 
 
 
-        welcomeOverlay.addEventListener('click', () => videoInput.click());
+        welcomeOverlay.addEventListener('click', () => {
+    // Reset toàn bộ dữ liệu cũ và giao diện trước khi mở bảng chọn file
+    clearOldFrames(); 
+    
+    // Đặt lại giá trị input file về rỗng để đảm bảo nếu chọn lại file trùng tên vẫn kích hoạt event 'change'
+    videoInput.value = ''; 
+    
+    // Kích hoạt mở bảng chọn file của thiết bị
+    videoInput.click();
+});
+        
         
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
             welcomeOverlay.addEventListener(evt, (e) => e.preventDefault(), false);
