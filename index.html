@@ -758,13 +758,35 @@ let scrollIntervalId = null;
         }
 
         // Giải phóng dung lượng ObjectURL cũ để tránh rò rỉ bộ nhớ (Memory Leak)
+                        // Giữ lại hàm này làm hàm duy nhất điều khiển việc dọn dẹp bộ nhớ
         function clearOldFrames() {
-            extractedFrames.forEach(f => {
-                if (f.url) URL.revokeObjectURL(f.url);
+            // 1. Gỡ bỏ hoàn toàn sự kiện của các canvas cũ trong gallery trước khi xóa
+            const oldCanvases = gallery.querySelectorAll('canvas');
+            oldCanvases.forEach(c => {
+                c.onclick = null;
+                if (c._showMenuHandler) c.removeEventListener('contextmenu', c._showMenuHandler);
+                if (c._touchStartHandler) c.removeEventListener('touchstart', c._touchStartHandler);
             });
+
+            // 2. Đóng các đối tượng ImageBitmap để giải phóng VRAM đồ họa ngay lập tức
+            extractedFrames.forEach(f => {
+                if (f.bitmap && typeof f.bitmap.close === 'function') {
+                    f.bitmap.close(); 
+                }
+            });
+
+            // 3. Thu hồi Object URL của ảnh Fullscreen cũ để tránh tràn RAM
+            if (fullscreenImg.src.startsWith('blob:')) {
+                URL.revokeObjectURL(fullscreenImg.src);
+                fullscreenImg.src = '';
+            }
+
+            // 4. Làm rỗng giao diện và mảng lưu trữ
             gallery.innerHTML = '';
             extractedFrames = [];
         }
+
+
 
         welcomeOverlay.addEventListener('click', () => videoInput.click());
         
@@ -1019,31 +1041,32 @@ let scrollIntervalId = null;
                     overlay.style.display = 'flex';
                 };
                 
-                // --- LOGIC XỬ LÝ BẤM GIỮ (LONG PRESS) & CHUỘT PHẢI ---
+                // ---                 // --- LOGIC XỬ LÝ BẤM GIỮ (LONG PRESS) & CHUỘT PHẢI ---
                 let pressTimer;
                 
                 const showMenuHandler = (e) => {
                     e.preventDefault();
-                    // Lấy tọa độ click hoặc chạm
                     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                    
                     openCustomMenu(clientX, clientY, bitmap, filename);
                 };
 
-                // Sự kiện trên Desktop (Click chuột phải)
+                // Lưu tham chiếu hàm vào đối tượng canvas để dọn dẹp triệt để về sau
+                thumbCanvas._showMenuHandler = showMenuHandler;
+
                 thumbCanvas.addEventListener('contextmenu', showMenuHandler);
 
-                // Sự kiện trên Mobile (Chạm giữ 600ms)
-                thumbCanvas.addEventListener('touchstart', (e) => {
+                // Lưu tham chiếu touchstart để gỡ bỏ khi xóa ảnh
+                thumbCanvas._touchStartHandler = (e) => {
                     pressTimer = setTimeout(() => {
                         showMenuHandler(e);
-                    }, 600); // Giữ 0.6 giây để kích hoạt
-                }, { passive: false });
+                    }, 600);
+                };
 
+                thumbCanvas.addEventListener('touchstart', thumbCanvas._touchStartHandler, { passive: false });
                 thumbCanvas.addEventListener('touchend', () => clearTimeout(pressTimer));
                 thumbCanvas.addEventListener('touchmove', () => clearTimeout(pressTimer));
-                
+
                 // 2. Tạo khu vực hiển thị thời gian đơn giản dưới đáy ảnh
                 const info = document.createElement('div');
                 info.className = 'info';
@@ -1094,24 +1117,27 @@ let scrollIntervalId = null;
             
             // Chạy vòng lặp dựng canvas để nén hàng loạt khi đóng gói ZIP
             // Chạy vòng lặp dựng canvas để nén hàng loạt khi đóng gói ZIP
-for (const f of extractedFrames) {
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = video.videoWidth;
-    tempCanvas.height = video.videoHeight;
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.drawImage(f.bitmap, 0, 0);
-    
-    const blob = await new Promise(resolve => {
-        // Đổi sang image/png và bỏ tham số chất lượng thừa
-        tempCanvas.toBlob(resolve, "image/png"); 
-    });
-    
-    if (blob) {
-        // Đổi đuôi tên file lưu vào zip từ .jpg sang .png
-        const pngFilename = f.filename.replace('.jpg', '.png');
-        zip.file(pngFilename, blob);
-    }
-}
+            for (const f of extractedFrames) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = video.videoWidth;
+                tempCanvas.height = video.videoHeight;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(f.bitmap, 0, 0);
+                
+                const blob = await new Promise(resolve => {
+                    tempCanvas.toBlob(resolve, "image/png"); 
+                });
+                
+                if (blob) {
+                    const pngFilename = f.filename.replace('.jpg', '.png');
+                    zip.file(pngFilename, blob);
+                }
+
+                // 🔥 THÊM 2 DÒNG NÀY: Hủy kích thước canvas lập tức để giải phóng RAM đồ họa tức thì
+                tempCanvas.width = 0;
+                tempCanvas.height = 0;
+            }
+
 
             
             const content = await zip.generateAsync({ type: "blob" });
@@ -1309,18 +1335,7 @@ function renderHighResToElement(bitmap, imgElement) {
 
 
 
-        // Sửa lại hàm dọn dẹp bộ nhớ gốc: Giải phóng toàn bộ ImageBitmap ra khỏi RAM khi chạy đợt trích xuất mới
-        function clearOldFrames() {
-            extractedFrames.forEach(f => {
-                if (f.bitmap) f.bitmap.close(); // Đóng bitmap để giải phóng bộ nhớ đồ họa ngay lập tức
-            });
-            if (fullscreenImg.src.startsWith('blob:')) {
-                URL.revokeObjectURL(fullscreenImg.src);
-                fullscreenImg.src = '';
-            }
-            gallery.innerHTML = '';
-            extractedFrames = [];
-        }
+        
 
 
                 // --- QUẢN LÝ HỘP THOẠI CONTEXT MENU ---
