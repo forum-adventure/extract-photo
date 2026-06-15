@@ -1062,10 +1062,18 @@ let scrollIntervalId = null;
                 thumbCtx.drawImage(bitmap, 0, 0, thumbCanvas.width, thumbCanvas.height);
 
                 // Click nhanh: Mở xem Fullscreen bình thường
-                thumbCanvas.onclick = () => {
-                    renderHighResToElement(bitmap, fullscreenImg);
-                    overlay.style.display = 'flex';
-                };
+                // Click nhanh (Tối ưu hóa phản hồi nhanh, tự ngắt cuộn khi người dùng xem ảnh)
+const triggerFullscreen = () => {
+    stopAutoScrollOnUserInteraction(); // Ngắt cuộn trang ngay lập tức để giải phóng click
+    renderHighResToElement(bitmap, fullscreenImg);
+    overlay.style.display = 'flex';
+};
+
+// Sử dụng cả mousedown (máy tính) và touchstart (điện thoại) để không bị hoãn sự kiện do cuộn trang
+thumbCanvas.addEventListener('mousedown', (e) => {
+    if (e.button === 0) triggerFullscreen(); // Chỉ kích hoạt khi click chuột trái
+});
+
                 
                 // ---                 // --- LOGIC XỬ LÝ BẤM GIỮ (LONG PRESS) & CHUỘT PHẢI ---
                 let pressTimer;
@@ -1096,18 +1104,27 @@ thumbCanvas.addEventListener('touchstart', (e) => {
         clearTimeout(pressTimer);
         return;
     }
+    
+    // Ngắt tự động cuộn để tránh trượt mục tiêu
+    stopAutoScrollOnUserInteraction(); 
+
     // Nếu chỉ có 1 ngón tay, kích hoạt bộ đếm thời gian Long Press như bình thường
-    thumbCanvas._touchStartHandler(e);
-}, { passive: false });
+    pressTimer = setTimeout(() => {
+        showMenuHandler(e);
+    }, 600);
+}, { passive: true });
 
-thumbCanvas.addEventListener('touchend', () => clearTimeout(pressTimer));
-
-thumbCanvas.addEventListener('touchmove', (e) => {
-    // Đề phòng trường hợp đang giữ 1 ngón rồi đặt tiếp ngón thứ 2 vào để zoom
-    if (e.touches.length > 1) {
+// Khi nhấc tay lên, nếu chưa đủ 600ms (tức là click nhanh) thì mở Fullscreen
+thumbCanvas.addEventListener('touchend', (e) => {
+    if (pressTimer) {
         clearTimeout(pressTimer);
+        // Kiểm tra xem menu chuột phải có đang hiển thị không, nếu không thì kích nổ fullscreen
+        if (ctxMenu.style.display !== 'block' && !isAutoScrolling) {
+            triggerFullscreen();
+        }
     }
 });
+
 
 
                 // 2. Tạo khu vực hiển thị thời gian đơn giản dưới đáy ảnh
