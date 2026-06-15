@@ -702,6 +702,16 @@
     <input type="file" id="videoInput" accept="video/*" style="display: none;">
 
     <script>
+        
+        // Đăng ký Service Worker khi trang hoàn tất tải dữ liệu
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker đã đăng ký thành công!', reg))
+            .catch(err => console.log('Lỗi đăng ký Service Worker:', err));
+    });
+}
+
         const video = document.getElementById('videoPlayer');
         const videoInput = document.getElementById('videoInput');
         const gallery = document.getElementById('gallery');

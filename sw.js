@@ -1,22 +1,31 @@
-const CACHE_NAME = 'todo-offline-v1';
-const urlsToCache = [
+// sw.js - Service Worker tối giản dành cho PWA cài đặt nhanh
+const CACHE_NAME = 'video-extractor-v1';
+const ASSETS = [
   './',
   './index.html',
-  './sw.js',
-  './pop.wav', // THÊM DÒNG NÀY ĐỂ LƯU ÂM THANH
-  'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
+  './manifest.json'
 ];
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+// Kích hoạt và lưu đệm các tài nguyên cơ bản
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS);
+    })
   );
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+self.addEventListener('activate', (e) => {
+  e.waitUntil(self.clients.claim());
+});
+
+// Bắt buộc phải có sự kiện fetch để trình duyệt công nhận PWA hợp lệ
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    caches.match(e.request).then((response) => {
+      return response || fetch(e.request);
+    })
   );
 });
+
+
