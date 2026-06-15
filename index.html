@@ -1281,22 +1281,29 @@ window.addEventListener('keydown', (e) => {
 });
         
                 // Hàm bổ trợ: Chuyển đổi bitmap sang ảnh chất lượng gốc khi xem Fullscreen
-        function renderHighResToElement(bitmap, imgElement) {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = video.videoWidth;
-            tempCanvas.height = video.videoHeight;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(bitmap, 0, 0);
-            
-            tempCanvas.toBlob((blob) => {
-                if (blob) {
-                    if (imgElement.src.startsWith('blob:')) {
-                        URL.revokeObjectURL(imgElement.src);
-                    }
-                    imgElement.src = URL.createObjectURL(blob);
-                }
-            }, "image/jpeg", 0.9);
+        // Thay thế hàm renderHighResToElement cũ bằng bản sửa lỗi này
+function renderHighResToElement(bitmap, imgElement) {
+    // Tạm thời xóa src cũ để tránh chớp nháy ảnh cũ trước khi nạp ảnh mới
+    const oldSrc = imgElement.src;
+    imgElement.src = ''; 
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = video.videoWidth;
+    tempCanvas.height = video.videoHeight;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(bitmap, 0, 0);
+    
+    tempCanvas.toBlob((blob) => {
+        if (blob) {
+            // Giải phóng ObjectURL cũ ngay trước khi gán cái mới để giải phóng RAM
+            if (oldSrc && oldSrc.startsWith('blob:')) {
+                URL.revokeObjectURL(oldSrc);
+            }
+            imgElement.src = URL.createObjectURL(blob);
         }
+    }, "image/jpeg", 0.95); // Nâng nhẹ chất lượng lên 0.95 cho sắc nét
+}
+
 
         // Sửa lại hàm dọn dẹp bộ nhớ gốc: Giải phóng toàn bộ ImageBitmap ra khỏi RAM khi chạy đợt trích xuất mới
         function clearOldFrames() {
