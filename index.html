@@ -532,7 +532,7 @@
 .controls.disabled-all input,
 .controls.disabled-all select,
 .controls.disabled-all label,
-.controls.disabled-all span,
+
 .controls.disabled-all #frameCount {
     color: #666666 !important;
     border-color: #3d3d3d !important; /* Làm xám đường viền của ô nhập liệu */
@@ -1009,6 +1009,10 @@ let scrollIntervalId = null;
                 }
                 timestamps.sort((a, b) => a - b);
             }
+                
+                const totalFrames = timestamps.length; // 1. Lấy tổng số lượng ảnh cần trích xuất
+            const extractTextSpan = extractLoading.querySelector('span'); // 2. Lấy thẻ hiển thị chữ "Extracting..."
+            extractTextSpan.innerText = `Extracting... (0/${totalFrames})`; // 3. Đặt trạng thái ban đầu là 0 ảnh
 
             galleryTitle.style.display = 'block';
 
@@ -1024,12 +1028,19 @@ let scrollIntervalId = null;
 
             let renderCounter = 0;
 
+            let currentFrameCount = 0; // 1. THÊM DÒNG NÀY: Khởi tạo biến đếm số ảnh chạy thành công
+
             for (const t of timestamps) {
                 if (shouldStopExtract) break; 
 
                 // Nhận về ImageBitmap siêu nhẹ từ GPU
                 const bitmap = await captureFrame(t);
                 if (!bitmap) continue; 
+
+                // --- ĐOẠN THÊM MỚI BẮT ĐẦU ---
+                currentFrameCount++; // 2. Tăng số đếm lên 1 khi có ảnh hợp lệ
+                extractTextSpan.innerText = `Extracting... (${currentFrameCount}/${totalFrames})`; // 3. Cập nhật giao diện real-time
+                // --- ĐOẠN THÊM MỚI KẾT THÚC ---
 
                 const filename = `frame_${t.toFixed(2)}s.png`;
 
