@@ -1033,15 +1033,13 @@ let scrollIntervalId = null;
                 // 1. Nâng độ phân giải Thumbnail nháp lên 350px để nét hơn trên màn hình Mobile cao cấp
                 // 1. Dùng canvas nhỏ làm ảnh Thumbnail nháp để không tốn RAM sinh URL Blob
                 const thumbCanvas = document.createElement('canvas');
-    // 💡 GIẢI PHÁP GIẢM TẢI: Giới hạn kích thước hiển thị của Thumbnail 
-    // Thay vì dùng full độ phân giải videoWidth/Height (ví dụ 4K, 1080p), ta ép về tỉ lệ nhỏ để tiết kiệm RAM.
-    const scaleFactor = Math.min(300 / video.videoWidth, 1); // Rộng tối đa 300px
-    thumbCanvas.width = video.videoWidth * scaleFactor;
-    thumbCanvas.height = video.videoHeight * scaleFactor;
-    
-    const thumbCtx = thumbCanvas.getContext('2d');
-    thumbCtx.drawImage(bitmap, 0, 0, thumbCanvas.width, thumbCanvas.height);
-                
+                thumbCanvas.width = video.videoWidth;   
+                thumbCanvas.height = video.videoHeight; 
+                const thumbCtx = thumbCanvas.getContext('2d');
+                thumbCtx.imageSmoothingEnabled = true;
+                thumbCtx.imageSmoothingQuality = 'high';
+                thumbCtx.drawImage(bitmap, 0, 0, thumbCanvas.width, thumbCanvas.height);
+
                 // Click nhanh: Mở xem Fullscreen bình thường
                 thumbCanvas.onclick = () => {
                     renderHighResToElement(bitmap, fullscreenImg);
