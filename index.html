@@ -994,7 +994,8 @@ let scrollIntervalId = null;
                 const bitmap = await captureFrame(t);
                 if (!bitmap) continue; 
 
-                const filename = `frame_${t.toFixed(2)}s.jpg`;
+                const filename = `frame_${t.toFixed(2)}s.png`;
+
                 // Lưu đối tượng bitmap vào mảng để dùng khi tải ZIP
                 extractedFrames.push({ bitmap, filename, timestamp: t });
 
@@ -1100,13 +1101,15 @@ let scrollIntervalId = null;
                 tempCtx.drawImage(f.bitmap, 0, 0);
                 
                 const blob = await new Promise(resolve => {
-                    tempCanvas.toBlob(resolve, "image/jpeg", 0.9);
-                });
-                
-                if (blob) {
-                    zip.file(f.filename, blob);
-                }
-            }
+    tempCanvas.toBlob(resolve, "image/png"); // Chuyển sang định dạng PNG chất lượng gốc
+});
+
+if (blob) {
+    // Đổi đuôi mở rộng của file trong ZIP thành .png
+    const pngFilename = f.filename.replace('.jpg', '.png');
+    zip.file(pngFilename, blob);
+}
+
             
             const content = await zip.generateAsync({ type: "blob" });
             const link = document.createElement('a');
@@ -1294,15 +1297,17 @@ function renderHighResToElement(bitmap, imgElement) {
     tempCtx.drawImage(bitmap, 0, 0);
     
     tempCanvas.toBlob((blob) => {
-        if (blob) {
-            // Giải phóng ObjectURL cũ ngay trước khi gán cái mới để giải phóng RAM
-            if (oldSrc && oldSrc.startsWith('blob:')) {
-                URL.revokeObjectURL(oldSrc);
-            }
-            imgElement.src = URL.createObjectURL(blob);
-        }
-    }, "image/jpeg", 0.95); // Nâng nhẹ chất lượng lên 0.95 cho sắc nét
-}
+    if (blob) {
+        const dlLink = document.createElement('a');
+        // Đổi tên file tải về sang đuôi .png
+        dlLink.download = currentTargetFilename.replace('.jpg', '.png');
+        const dlUrl = URL.createObjectURL(blob);
+        dlLink.href = dlUrl;
+        dlLink.click();
+        URL.revokeObjectURL(dlUrl);
+    }
+}, "image/png"); // Xuất chuẩn PNG gốc
+
 
 
         // Sửa lại hàm dọn dẹp bộ nhớ gốc: Giải phóng toàn bộ ImageBitmap ra khỏi RAM khi chạy đợt trích xuất mới
