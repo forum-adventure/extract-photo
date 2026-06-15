@@ -1289,10 +1289,11 @@ window.addEventListener('keydown', (e) => {
                 // Hàm bổ trợ: Chuyển đổi bitmap sang ảnh chất lượng gốc khi xem Fullscreen
         // Thay thế hàm renderHighResToElement cũ bằng bản sửa lỗi này
 function renderHighResToElement(bitmap, imgElement) {
-    // Tạm thời xóa src cũ để tránh chớp nháy ảnh cũ trước khi nạp ảnh mới
     const oldSrc = imgElement.src;
-    imgElement.src = ''; 
-
+    if (oldSrc && oldSrc.startsWith('blob:')) {
+        URL.revokeObjectURL(oldSrc);
+    }
+    
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = video.videoWidth;
     tempCanvas.height = video.videoHeight;
@@ -1300,18 +1301,12 @@ function renderHighResToElement(bitmap, imgElement) {
     tempCtx.drawImage(bitmap, 0, 0);
     
     tempCanvas.toBlob((blob) => {
-    if (blob) {
-        const dlLink = document.createElement('a');
-        // Đảm bảo đuôi file chuẩn PNG
-        dlLink.download = currentTargetFilename.replace('.jpg', '.png');
-        const dlUrl = URL.createObjectURL(blob);
-        dlLink.href = dlUrl;
-        dlLink.click();
-        URL.revokeObjectURL(dlUrl);
-    }
-}, "image/png"); // Chuyển sang định dạng gốc PNG không nén bệt màu
-
+        if (blob) {
+            imgElement.src = URL.createObjectURL(blob);
+        }
+    }, "image/png"); // Đảm bảo xuất ra PNG để xem Fullscreen nét nhất
 }
+
 
 
         // Sửa lại hàm dọn dẹp bộ nhớ gốc: Giải phóng toàn bộ ImageBitmap ra khỏi RAM khi chạy đợt trích xuất mới
@@ -1355,27 +1350,28 @@ function renderHighResToElement(bitmap, imgElement) {
 
         // Xử lý khi nhấn nút Tải trong Menu tùy chọn
         ctxDownloadBtn.addEventListener('click', () => {
-            if (!currentTargetBitmap) return;
-            
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = video.videoWidth;
-            tempCanvas.height = video.videoHeight;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(currentTargetBitmap, 0, 0);
-            
-            tempCanvas.toBlob((blob) => {
-                if (blob) {
-                    const dlLink = document.createElement('a');
-                    dlLink.download = currentTargetFilename;
-                    const dlUrl = URL.createObjectURL(blob);
-                    dlLink.href = dlUrl;
-                    dlLink.click();
-                    URL.revokeObjectURL(dlUrl);
-                }
-            }, "image/jpeg", 0.9);
-            
-            ctxMenu.style.display = 'none';
-        });
+    if (!currentTargetBitmap) return;
+    
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = video.videoWidth;
+    tempCanvas.height = video.videoHeight;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(currentTargetBitmap, 0, 0);
+    
+    tempCanvas.toBlob((blob) => {
+        if (blob) {
+            const dlLink = document.createElement('a');
+            dlLink.download = currentTargetFilename; // Sử dụng tên file .png gốc
+            const dlUrl = URL.createObjectURL(blob);
+            dlLink.href = dlUrl;
+            dlLink.click();
+            URL.revokeObjectURL(dlUrl);
+        }
+    }, "image/png"); // Thay đổi ở đây: Chuyển hoàn toàn sang image/png chất lượng cao nhất
+    
+    ctxMenu.style.display = 'none';
+});
+
 
         // Click ra ngoài hoặc cuộn màn hình thì tự động đóng menu
         document.addEventListener('click', (e) => {
