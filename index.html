@@ -994,7 +994,8 @@ let scrollIntervalId = null;
                 const bitmap = await captureFrame(t);
                 if (!bitmap) continue; 
 
-                const filename = `frame_${t.toFixed(2)}s.jpg`;
+                const filename = `frame_${t.toFixed(2)}s.png`;
+
                 // Lưu đối tượng bitmap vào mảng để dùng khi tải ZIP
                 extractedFrames.push({ bitmap, filename, timestamp: t });
 
@@ -1092,21 +1093,26 @@ let scrollIntervalId = null;
             const zip = new JSZip();
             
             // Chạy vòng lặp dựng canvas để nén hàng loạt khi đóng gói ZIP
-            for (const f of extractedFrames) {
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = video.videoWidth;
-                tempCanvas.height = video.videoHeight;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.drawImage(f.bitmap, 0, 0);
-                
-                const blob = await new Promise(resolve => {
-                    tempCanvas.toBlob(resolve, "image/jpeg", 0.9);
-                });
-                
-                if (blob) {
-                    zip.file(f.filename, blob);
-                }
-            }
+            // Chạy vòng lặp dựng canvas để nén hàng loạt khi đóng gói ZIP
+for (const f of extractedFrames) {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = video.videoWidth;
+    tempCanvas.height = video.videoHeight;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(f.bitmap, 0, 0);
+    
+    const blob = await new Promise(resolve => {
+        // Đổi sang image/png và bỏ tham số chất lượng thừa
+        tempCanvas.toBlob(resolve, "image/png"); 
+    });
+    
+    if (blob) {
+        // Đổi đuôi tên file lưu vào zip từ .jpg sang .png
+        const pngFilename = f.filename.replace('.jpg', '.png');
+        zip.file(pngFilename, blob);
+    }
+}
+
             
             const content = await zip.generateAsync({ type: "blob" });
             const link = document.createElement('a');
@@ -1294,14 +1300,17 @@ function renderHighResToElement(bitmap, imgElement) {
     tempCtx.drawImage(bitmap, 0, 0);
     
     tempCanvas.toBlob((blob) => {
-        if (blob) {
-            // Giải phóng ObjectURL cũ ngay trước khi gán cái mới để giải phóng RAM
-            if (oldSrc && oldSrc.startsWith('blob:')) {
-                URL.revokeObjectURL(oldSrc);
-            }
-            imgElement.src = URL.createObjectURL(blob);
-        }
-    }, "image/jpeg", 0.95); // Nâng nhẹ chất lượng lên 0.95 cho sắc nét
+    if (blob) {
+        const dlLink = document.createElement('a');
+        // Đảm bảo đuôi file chuẩn PNG
+        dlLink.download = currentTargetFilename.replace('.jpg', '.png');
+        const dlUrl = URL.createObjectURL(blob);
+        dlLink.href = dlUrl;
+        dlLink.click();
+        URL.revokeObjectURL(dlUrl);
+    }
+}, "image/png"); // Chuyển sang định dạng gốc PNG không nén bệt màu
+
 }
 
 
