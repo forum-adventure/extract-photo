@@ -760,31 +760,36 @@ let scrollIntervalId = null;
         // Giải phóng dung lượng ObjectURL cũ để tránh rò rỉ bộ nhớ (Memory Leak)
                         // Giữ lại hàm này làm hàm duy nhất điều khiển việc dọn dẹp bộ nhớ
         function clearOldFrames() {
-            // 1. Gỡ bỏ hoàn toàn sự kiện của các canvas cũ trong gallery trước khi xóa
-            const oldCanvases = gallery.querySelectorAll('canvas');
-            oldCanvases.forEach(c => {
-                c.onclick = null;
-                if (c._showMenuHandler) c.removeEventListener('contextmenu', c._showMenuHandler);
-                if (c._touchStartHandler) c.removeEventListener('touchstart', c._touchStartHandler);
-            });
+    // 1. Gỡ bỏ sự kiện và giải phóng kích thước canvas để thu hồi VRAM lập tức
+    const oldCanvases = gallery.querySelectorAll('canvas');
+    oldCanvases.forEach(c => {
+        c.onclick = null;
+        if (c._showMenuHandler) c.removeEventListener('contextmenu', c._showMenuHandler);
+        if (c._touchStartHandler) c.removeEventListener('touchstart', c._touchStartHandler);
+        
+        // 🔥 Bí kíp giải phóng VRAM: Ép kích thước về 0
+        c.width = 0;
+        c.height = 0;
+    });
 
-            // 2. Đóng các đối tượng ImageBitmap để giải phóng VRAM đồ họa ngay lập tức
-            extractedFrames.forEach(f => {
-                if (f.bitmap && typeof f.bitmap.close === 'function') {
-                    f.bitmap.close(); 
-                }
-            });
-
-            // 3. Thu hồi Object URL của ảnh Fullscreen cũ để tránh tràn RAM
-            if (fullscreenImg.src.startsWith('blob:')) {
-                URL.revokeObjectURL(fullscreenImg.src);
-                fullscreenImg.src = '';
-            }
-
-            // 4. Làm rỗng giao diện và mảng lưu trữ
-            gallery.innerHTML = '';
-            extractedFrames = [];
+    // 2. Đóng các đối tượng ImageBitmap
+    extractedFrames.forEach(f => {
+        if (f.bitmap && typeof f.bitmap.close === 'function') {
+            f.bitmap.close(); 
         }
+    });
+
+    // 3. Thu hồi Object URL của ảnh Fullscreen cũ
+    if (fullscreenImg.src.startsWith('blob:')) {
+        URL.revokeObjectURL(fullscreenImg.src);
+        fullscreenImg.src = '';
+    }
+
+    // 4. Làm rỗng giao diện và mảng lưu trữ
+    gallery.innerHTML = '';
+    extractedFrames = [];
+}
+
 
 
 
@@ -1155,9 +1160,15 @@ let scrollIntervalId = null;
 
 
         // Cho phép click vào bất kỳ vị trí nào thuộc khu vực overlay (ảnh, vùng đen, nút X) để đóng nhanh
+// Thêm lệnh xóa src khi đóng overlay
 overlay.addEventListener('click', () => {
     overlay.style.display = 'none';
+    if (fullscreenImg.src.startsWith('blob:')) {
+        URL.revokeObjectURL(fullscreenImg.src); // Thu hồi vùng nhớ ngay lập tức
+        fullscreenImg.src = ''; 
+    }
 });
+
 
 // Ngăn sự kiện đóng bị lỗi nếu lỡ bấm trượt hoặc kéo nhẹ trên máy tính
 fullscreenImg.addEventListener('click', (e) => {
