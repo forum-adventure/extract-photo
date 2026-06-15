@@ -1089,9 +1089,26 @@ let scrollIntervalId = null;
                     }, 600);
                 };
 
-                thumbCanvas.addEventListener('touchstart', thumbCanvas._touchStartHandler, { passive: false });
-                thumbCanvas.addEventListener('touchend', () => clearTimeout(pressTimer));
-                thumbCanvas.addEventListener('touchmove', () => clearTimeout(pressTimer));
+                // ĐOẠN MỚI ĐÃ SỬA CHỮA:
+thumbCanvas.addEventListener('touchstart', (e) => {
+    // NẾU CÓ TỪ 2 NGÓN TAY TRỞ LÊN (ĐANG ZOOM): Hủy ngay lập tức không cho hiện Menu
+    if (e.touches.length > 1) {
+        clearTimeout(pressTimer);
+        return;
+    }
+    // Nếu chỉ có 1 ngón tay, kích hoạt bộ đếm thời gian Long Press như bình thường
+    thumbCanvas._touchStartHandler(e);
+}, { passive: false });
+
+thumbCanvas.addEventListener('touchend', () => clearTimeout(pressTimer));
+
+thumbCanvas.addEventListener('touchmove', (e) => {
+    // Đề phòng trường hợp đang giữ 1 ngón rồi đặt tiếp ngón thứ 2 vào để zoom
+    if (e.touches.length > 1) {
+        clearTimeout(pressTimer);
+    }
+});
+
 
                 // 2. Tạo khu vực hiển thị thời gian đơn giản dưới đáy ảnh
                 const info = document.createElement('div');
@@ -1376,24 +1393,36 @@ function renderHighResToElement(bitmap, imgElement) {
         let currentTargetBitmap = null;
         let currentTargetFilename = '';
 
-        function openCustomMenu(x, y, bitmap, filename) {
+                function openCustomMenu(x, y, bitmap, filename) {
             currentTargetBitmap = bitmap;
             currentTargetFilename = filename;
             
-            ctxMenu.style.left = `${x}px`;
-            ctxMenu.style.top = `${y}px`;
-            ctxMenu.style.display = 'block';
+            ctxMenu.style.display = 'block'; // Phải hiện menu trước để trình duyệt tính được chiều cao thực (offsetHeight)
             
-            // Bo góc thông minh: Đảm bảo menu không bị tràn ra ngoài rìa màn hình phải/dưới
             const menuWidth = ctxMenu.offsetWidth;
             const menuHeight = ctxMenu.offsetHeight;
+            
+            // Tính toán vị trí Y (Đẩy lên trên chỗ bấm giữ, trừ thêm 10px khoảng cách an toàn)
+            let targetY = y - menuHeight - 10;
+            
+            // Nếu vị trí quá sát mép trên màn hình không đủ chỗ hiển thị, tự động lật xuống dưới chỗ bấm giữ
+            if (targetY < 10) {
+                targetY = y + 15; 
+            }
+            
+            // Đảm bảo menu không bị tràn ra ngoài rìa bên phải màn hình
+            let targetX = x;
             if (x + menuWidth > window.innerWidth) {
-                ctxMenu.style.left = `${window.innerWidth - menuWidth - 10}px`;
+                targetX = window.innerWidth - menuWidth - 10;
             }
-            if (y + menuHeight > window.innerHeight) {
-                ctxMenu.style.top = `${window.innerHeight - menuHeight - 10}px`;
-            }
+            // Đảm bảo menu không bị tràn ra ngoài rìa bên trái màn hình
+            if (targetX < 10) targetX = 10;
+
+            // Gán tọa độ mới vào CSS
+            ctxMenu.style.left = `${targetX}px`;
+            ctxMenu.style.top = `${targetY}px`;
         }
+
 
         // Xử lý khi nhấn nút Tải trong Menu tùy chọn
         ctxDownloadBtn.addEventListener('click', () => {
