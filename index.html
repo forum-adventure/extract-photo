@@ -685,33 +685,35 @@
         </div>
         
                 <div class="controls-row action-group">
-            <button id="extractBtn" class="action-btn" disabled>Select Video First</button>
-            
-            <div id="extractLoading" style="display: none; align-items: center; justify-content: center; gap: 8px; flex: 1; background: #2d2d2d; padding: 0 8px; border-radius: 6px; height: 38px; box-sizing: border-box;">
-                <div class="spinner" style="width: 14px; height: 14px; margin: 0; box-shadow: none; border-width: 2px; flex-shrink: 0;"></div>
-                <span style="color: #03dac6; font-size: 11px; white-space: nowrap; font-weight: bold;">Extracting...</span>
-                <button id="stopExtractBtn" class="tune-btn" style="background: #cf6679; color: #000; border: none; padding: 4px 8px; font-weight: bold; font-size: 10px; border-radius: 4px; cursor: pointer; margin-left: auto; white-space: nowrap; height: 26px;">
-                    STOP
-                </button>
-            </div>
+    <button id="extractBtn" class="action-btn" disabled>Select Video First</button>
+    
+    <div id="extractLoading" style="display: none; align-items: center; justify-content: center; gap: 8px; flex: 1; background: #2d2d2d; padding: 0 8px; border-radius: 6px; height: 38px; box-sizing: border-box;">
+        <div class="spinner" style="width: 14px; height: 14px; margin: 0; box-shadow: none; border-width: 2px; flex-shrink: 0;"></div>
+        <span style="color: #03dac6; font-size: 11px; white-space: nowrap; font-weight: bold;">Extracting...</span>
+        <button id="stopExtractBtn" class="tune-btn" style="background: #cf6679; color: #000; border: none; padding: 4px 8px; font-weight: bold; font-size: 10px; border-radius: 4px; cursor: pointer; margin-left: auto; white-space: nowrap; height: 26px;">
+            STOP
+        </button>
+    </div>
 
-            <button id="downloadAllBtn" class="action-btn">Download All (ZIP)</button>
-        </div>
+    <button id="changeVideoBtn" class="action-btn" style="background-color: #333333; color: #ffffff; display: none; align-items: center; justify-content: center; gap: 8px;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="17 8 12 3 7 8"></polyline>
+        <line x1="12" y1="3" x2="12" y2="15"></line>
+    </svg>
+    <span>Change Video</span>
+</button>
+
+    <button id="downloadAllBtn" class="action-btn">Download All (ZIP)</button>
+</div>
+
 
 
     <input type="file" id="videoInput" accept="video/*" style="display: none;">
 
     <script>
         
-        // Đăng ký Service Worker khi trang hoàn tất tải dữ liệu
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker đã đăng ký thành công!', reg))
-            .catch(err => console.log('Lỗi đăng ký Service Worker:', err));
-    });
-}
-
+        
         const video = document.getElementById('videoPlayer');
         const videoInput = document.getElementById('videoInput');
         const gallery = document.getElementById('gallery');
@@ -734,7 +736,9 @@ if ('serviceWorker' in navigator) {
         const intervalStepInput = document.getElementById('intervalStep');
         const extractLoading = document.getElementById('extractLoading');
         const stopExtractBtn = document.getElementById('stopExtractBtn');
-    
+    const changeVideoBtn = document.getElementById('changeVideoBtn');
+
+        
     // --- THÊM CÁC BIẾN NÀY ĐỂ QUẢN LÝ TỰ ĐỘNG CUỘN ---
 let isAutoScrolling = false;
 let scrollIntervalId = null;
@@ -847,6 +851,9 @@ let scrollIntervalId = null;
         document.body.classList.add('has-video');
         galleryTitle.style.display = 'none';
         downloadAllBtn.style.display = 'none';
+        
+         // HIỂN THỊ NÚT ĐỔI VIDEO TẠI ĐÂY
+        changeVideoBtn.style.display = 'inline-flex';
 
         // Kỹ thuật kích nổ luồng giải mã (Video Pipeline Warm-up) dành riêng cho iOS
         video.load();
@@ -1472,6 +1479,32 @@ function renderHighResToElement(bitmap, imgElement) {
         window.addEventListener('scroll', () => {
             ctxMenu.style.display = 'none';
         });
+        
+        // Sự kiện khi bấm nút "Upload video khác"
+changeVideoBtn.addEventListener('click', () => {
+    // 1. Giải phóng bộ nhớ và xóa ảnh cũ
+    clearOldFrames();
+    
+    // 2. Thu hồi ObjectURL của video cũ để tránh rò rỉ RAM (Memory Leak)
+    if (video.src && video.src.startsWith('blob:')) {
+        URL.revokeObjectURL(video.src);
+    }
+    
+    // 3. Đặt lại trạng thái ban đầu của player
+    video.src = '';
+    video.style.display = 'none';
+    document.body.classList.remove('has-video');
+    
+    // 4. Ẩn chính nó và nút download ZIP đi
+    changeVideoBtn.style.display = 'none';
+    downloadAllBtn.style.display = 'none';
+    galleryTitle.style.display = 'none';
+    
+    // 5. Reset lại ô chọn file và kích hoạt click chọn file mới
+    videoInput.value = ''; 
+    videoInput.click();
+});
+
 
     </script>
 </body>
