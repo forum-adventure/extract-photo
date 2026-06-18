@@ -1,6 +1,6 @@
 {
-  "short_name": "Frame Extractor",
-  "name": "Video Frame Extractor",
+  "short_name": "Photo Extractor",
+  "name": "Photo Extractor",
   "icons": [
     {
       "src": "./icon-512.png",
